@@ -1,3 +1,5 @@
+# ======= Import libraries =======
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -10,6 +12,9 @@ from shapely import wkt
 from shapely.geometry import Polygon, MultiPolygon
 import geojson
 import os
+
+
+# ======= Init =======
 
 app = FastAPI()
 nlp = spacy.load("en_core_web_sm")
@@ -70,7 +75,9 @@ def get_osm_relation_id(qid):
     response = requests.get(url, params={"query": query}, headers=headers)
     response.raise_for_status()
     bindings = response.json()["results"]["bindings"]
-    return bindings[0]["osmId"]["value"] if bindings else None
+    if bindings:
+        return bindings[0]["osmId"]["value"]
+    return None
 
 def get_geometry_from_osm(osm_id):
     overpass_url = "https://overpass-api.de/api/interpreter"
@@ -87,18 +94,48 @@ def get_geometry_from_osm(osm_id):
         for el in element:
             if el == "members":
                 for e in element[el]:
-                    if "geometry" in e:
-                        coords = [(pt["lon"], pt["lat"]) for pt in e["geometry"]]
-                        if coords:
-                            coordinates.append(coords)
+                    for prop in e:
+                        if prop == "geometry":
+                            coords = [(pt["lon"], pt["lat"]) for pt in e[prop]]
+                            if coords:
+                                coordinates.append(coords)
     return coordinates
 
 def convert_to_vkt(coordinates):
+    from shapely.geometry import Polygon, MultiPolygon
     polygons = [Polygon(coords) for coords in coordinates if len(coords) >= 3]
     if not polygons:
         return None
     multi = MultiPolygon(polygons)
     return multi.wkt
+
+def save_geojson(file, filename="output.geojson"):
+    features = []
+
+    for res in file:
+        vkt_value = res.get("vkt")
+        if not vkt_value:
+            continue
+        try:
+            shape = wkt.loads(vkt_value)
+            geojson_geom = geojson.Feature(
+                geometry=geojson.loads(geojson.dumps(shape.__geo_interface__)),
+                properties={
+                    "label": res["label"],
+                    "qid": res["qid"],
+                    "description": res.get("description"),
+                    "wikidata_url": res["wikidata_url"],
+                    "osm_id": res.get("osm_id")
+                }
+            )
+            features.append(geojson_geom)
+        except Exception as e:
+            print(f"❌ Error converting GeoJSON to {res['label']}: {e}")
+
+    feature_collection = geojson.FeatureCollection(features)
+    with open(filename, "w", encoding="utf-8") as f:
+        geojson.dump(feature_collection, f, ensure_ascii=False, indent=2)
+    print(f"\n✅ GeoJSON saved in: {filename}")
 
 def get_coordinates_from_wikidata(qid):
     query = f"""
@@ -110,19 +147,20 @@ def get_coordinates_from_wikidata(qid):
     headers = {"Accept": "application/sparql-results+json"}
     response = requests.get(url, params={"query": query}, headers=headers)
     response.raise_for_status()
-    bindings = response.json()["results"]["bindings"]
-    if bindings:
-        coord_str = bindings[0]["coord"]["value"]
-        if coord_str.startswith("Point("):
-            lon, lat = map(float, coord_str[6:-1].split())
+    coors_bindings = response.json()["results"]["bindings"]
+    if coors_bindings:
+        coord_str = coors_bindings[0]["coord"]["value"]
+        if coord_str.startswith("Point("):  # WKT
+            parts = coord_str[6:-1].split()
+            lon, lat = float(parts[0]), float(parts[1])
             return lat, lon
     return None
 
 
-# ======= Core analysis =======
-
 def analyze_text(text):
     entities_spacy = extract_geo_entity(text)
+    print(f"\nEntities found by spaCy: {entities_spacy}")
+
     annotations = disambiguation_with_wikifier(text)
     entities = []
     processed_qids = set()
@@ -131,21 +169,35 @@ def analyze_text(text):
         try:
             qid = annotation["wikiDataItemId"]
             label = annotation["title"]
-            if qid in processed_qids:
-                return
+        except KeyError:
+            return
+
+        if qid in processed_qids:
+            return
+
+        try:
             if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
                 return
+            print(f"\n🔍 Entity check: {label} ({qid})...")
             osm_id = get_osm_relation_id(qid)
+            print(f"✔️ It is geographic - OSM ID: {osm_id}")
             vkt = None
             if osm_id:
                 coords = get_geometry_from_osm(osm_id)
                 if coords:
                     vkt = convert_to_vkt(coords)
+                else:
+                    print("⚠️ No OSM geometry found. Trying with coordinates...")
             if not vkt:
                 coords_point = get_coordinates_from_wikidata(qid)
                 if coords_point:
                     lat, lon = coords_point
                     vkt = f"POINT ({lon} {lat})"
+                    print(f"📍 Coordinates found: {lat}, {lon}")
+                    print(f"📍 VKT: {vkt[:80]}..." if vkt else "⚠️ No valid geometry.")
+            else:
+                geom_type = vkt.split()[0]
+                print(f"📐 Geometry type: {geom_type}")
             entities.append({
                 "label": label,
                 "qid": qid,
@@ -155,9 +207,9 @@ def analyze_text(text):
                 "vkt": vkt
             })
             processed_qids.add(qid)
-            time.sleep(1)
+            time.sleep(1)  # Avoid rate limit
         except Exception as e:
-            print(f"❌ Error with {annotation.get('title', 'unknown')}: {e}")
+            print(f"❌ Error with {label}: {e}")
 
     for ent_text in entities_spacy:
         ent_annotations = disambiguation_with_wikifier(ent_text)
