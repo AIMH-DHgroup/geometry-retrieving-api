@@ -1,20 +1,41 @@
 # ======= Import libraries =======
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-from typing import List, Optional
+#from typing import List, Optional
 from uuid import uuid4
+#from pathlib import Path
 import spacy
 import requests
 import time
-from shapely import wkt
-from shapely.geometry import Polygon, MultiPolygon
-import geojson
+#from shapely import wkt
+#from shapely.geometry import Polygon, MultiPolygon
+import json
 import os
-
+#from spacy.cli import download
 
 # ======= Init =======
+
+GEOSPARQL_CONTEXT = {
+    "@context": {
+        "geo":        "http://www.opengis.net/ont/geosparql#",
+        "schema":     "http://schema.org/",
+        "xsd":        "http://www.w3.org/2001/XMLSchema#",
+        "label":      "schema:name",
+        "description":"schema:description",
+        "qid":        "schema:identifier",
+        "wikidata":   "schema:sameAs",
+        "osm_id":     "schema:identifier",
+        "Feature":    "geo:Feature",
+        "Geometry":   "geo:Geometry",
+        "hasGeometry":"geo:hasGeometry",
+        "asWKT": {
+            "@id": "geo:asWKT",
+            "@type": "geo:wktLiteral"
+        }
+    }
+}
 
 app = FastAPI()
 nlp = spacy.load("en_core_web_sm")
@@ -109,33 +130,33 @@ def convert_to_vkt(coordinates):
     multi = MultiPolygon(polygons)
     return multi.wkt
 
-def save_geojson(file, filename="output.geojson"):
-    features = []
-
-    for res in file:
-        vkt_value = res.get("vkt")
-        if not vkt_value:
-            continue
-        try:
-            shape = wkt.loads(vkt_value)
-            geojson_geom = geojson.Feature(
-                geometry=geojson.loads(geojson.dumps(shape.__geo_interface__)),
-                properties={
-                    "label": res["label"],
-                    "qid": res["qid"],
-                    "description": res.get("description"),
-                    "wikidata_url": res["wikidata_url"],
-                    "osm_id": res.get("osm_id")
-                }
-            )
-            features.append(geojson_geom)
-        except Exception as e:
-            print(f"❌ Error converting GeoJSON to {res['label']}: {e}")
-
-    feature_collection = geojson.FeatureCollection(features)
-    with open(filename, "w", encoding="utf-8") as f:
-        geojson.dump(feature_collection, f, ensure_ascii=False, indent=2)
-    print(f"\n✅ GeoJSON saved in: {filename}")
+#def save_geojson(file, filename="output.geojson"):
+#    features = []
+#
+#    for res in file:
+#        vkt_value = res.get("vkt")
+#        if not vkt_value:
+#            continue
+#        try:
+#            shape = wkt.loads(vkt_value)
+#            geojson_geom = geojson.Feature(
+#                geometry=geojson.loads(geojson.dumps(shape.__geo_interface__)),
+#                properties={
+#                    "label": res["label"],
+#                    "qid": res["qid"],
+#                    "description": res.get("description"),
+#                    "wikidata_url": res["wikidata_url"],
+#                    "osm_id": res.get("osm_id")
+#                }
+#            )
+#            features.append(geojson_geom)
+#        except Exception as e:
+#            print(f"❌ Error converting GeoJSON to {res['label']}: {e}")
+#
+#    feature_collection = geojson.FeatureCollection(features)
+#    with open(filename, "w", encoding="utf-8") as f:
+#        geojson.dump(feature_collection, f, ensure_ascii=False, indent=2)
+#    print(f"\n✅ GeoJSON saved in: {filename}")
 
 def get_coordinates_from_wikidata(qid):
     query = f"""
@@ -204,7 +225,8 @@ def analyze_text(text):
                 "description": annotation.get("description"),
                 "wikidata_url": f"https://www.wikidata.org/wiki/{qid}",
                 "osm_id": osm_id,
-                "vkt": vkt
+                "vkt": vkt,
+                "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
             })
             processed_qids.add(qid)
             time.sleep(1)  # Avoid rate limit
@@ -225,42 +247,59 @@ def analyze_text(text):
 # ======= FastAPI endpoints =======
 
 @app.post("/analyze")
-def analyze_endpoint(payload: TextInput):
+def analyze_input_text(payload: TextInput):
     try:
         results = analyze_text(payload.text)
         return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/geojson")
-def get_geojson(data: TextInput):
+@app.post("/geosparql")
+def analyze_and_get_geoSPARQL(data: TextInput, download: bool = True):
+    """
+        Return JSON‑LD compliant with GeoSPARQL.
+        ?download=false --> JSON inline
+        else downloadable .jsonld file
+    """
     try:
         results = analyze_text(data.text)
 
         features = []
         for res in results:
             if res["vkt"]:
-                geometry = wkt.loads(res["vkt"])
-                gj_geometry = geojson.Feature(
-                    geometry=geojson.loads(geojson.dumps(geometry.__geo_interface__)),
-                    properties={
-                        "label": res["label"],
-                        "qid": res["qid"],
-                        "wikidata_url": res["wikidata_url"],
-                        "osm_id": res["osm_id"],
-                        "description": res["description"]
-                    }
-                )
-                features.append(gj_geometry)
+                feature_id = f"wd:{res['qid']}"
+                geometry_obj = {
+                    "@id": f"{feature_id}-geom",
+                    "@type": "Geometry",
+                    "asWKT": f"SRID=4326;{res['vkt']}"
+                }
+                feature = {
+                    "@id": feature_id,
+                    "@type": "Feature",
+                    "label": res["label"],
+                    "description": res["description"],
+                    "qid": res["qid"],
+                    "wikidata": res["wikidata_url"],
+                    "osm_id": res["osm_id"],
+                    "hasGeometry": geometry_obj
+                }
+                features.append(feature)
 
-        feature_collection = geojson.FeatureCollection(features)
+        geosparql_doc = {
+            **GEOSPARQL_CONTEXT,
+            "@graph": features
+        }
 
-        filename = f"output_{uuid4().hex}.geojson"
+        if not download:
+            return JSONResponse(content=geosparql_doc,
+                                media_type="application/ld+json")
+
+        filename = f"geosparql_{uuid4().hex}.jsonld"
         path = f"/tmp/{filename}"
         with open(path, "w", encoding="utf-8") as f:
-            geojson.dump(feature_collection, f, ensure_ascii=False, indent=2)
+            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
 
-        return FileResponse(path, media_type="application/geo+json", filename=filename)
+        return FileResponse(path, media_type="application/ld+json", filename=filename)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
