@@ -8,7 +8,7 @@ Create a Python environment and install the requirements.txt using the command:
 pip install -r requirements.txt
 ```
 
-After that, go to the [Wikifier website](https://wikifier.org/register.html){:target="_blank"} and create a user. Then, copy the key and paste it into the following command:
+After that, go to the [Wikifier website](https://wikifier.org/register.html) and create a user. Then, copy the key and paste it into the following command:
 
 ```shell
 export WIKIFIER_API_KEY="your_api_key"
@@ -20,7 +20,7 @@ Lastly, run the API with:
 uvicorn main:app --reload
 ```
 
-If you want to use the web interface open this [tab](http://127.0.0.1:8000/docs){:target="_blank"} in your browser, otherwise you can use this command from terminal:
+If you want to use the web interface open this [tab](http://127.0.0.1:8000/docs) in your browser, otherwise you can use this command from terminal:
 
 ```shell
 curl -X POST "http://127.0.0.1:8000/geosparql?download=false" \
