@@ -21,7 +21,7 @@ Lastly, run the API with:
 uvicorn main:app
 ```
 
-If you want to use the web interface open this [tab](http://127.0.0.1:8000/docs) in your browser, otherwise you can use this command from terminal:
+If you want to use the web interface open this [tab](http://127.0.0.1:8000/docs) in your browser, otherwise you can use this command:
 
 ```shell
 curl -X POST "http://127.0.0.1:8000/geosparql" \
