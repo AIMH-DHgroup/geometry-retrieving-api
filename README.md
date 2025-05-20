@@ -1,5 +1,6 @@
 # geometry-retrieving-api
 This API allows to retrieve information about entities in an input text. After the Named-Entity Recognition phase, it uses ``Wikifier`` to disambiguate them, then a SPARQL query is performed to obtain Wikidata and OpenStreetMap IDs. Finally, the geometries are stored in a GeoJSON file.
+Tested with Python 3.9.
 
 ## Installation
 Create a Python environment and install the requirements.txt using the command:
