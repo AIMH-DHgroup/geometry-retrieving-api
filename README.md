@@ -28,5 +28,7 @@ curl -X POST "http://127.0.0.1:8000/geosparql" \
      -d '{"text":"your_text"}'
 ```
 
+The endpoints are ``/analyze`` and ``/geosparql`` and the latter has the ``download`` option set to ``true`` by default but you can pass ``false`` with: ``http://127.0.0.1:8000/geosparql?download=false``.
+
 ## Help/Feedback
 If you need help or want to leave feedback, check out the discussions [here](https://github.com/AIMH-DHgroup/geometry-retrieving-api/discussions) or start a new one.
