@@ -29,4 +29,4 @@ curl -X POST "http://127.0.0.1:8000/geosparql?download=false" \
 ```
 
 ## Help/Feedback
-If you need help or want to leave feedback, check out the discussions [here](https://github.com/AIMH-DHgroup/geometry-retrieving-api/discussions){:target="_blank"} or start a new one.
+If you need help or want to leave feedback, check out the discussions [here](https://github.com/AIMH-DHgroup/geometry-retrieving-api/discussions) or start a new one.
