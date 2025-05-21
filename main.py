@@ -3,7 +3,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-#from typing import List, Optional
+from typing import Optional
+#from typing import List
 from uuid import uuid4
 #from pathlib import Path
 import spacy
@@ -37,6 +38,8 @@ GEOSPARQL_CONTEXT = {
     }
 }
 
+SUPPORTED_LANGUAGES = ["en", "it", "de", "fr", "es", "ru", "pl", "pt"]  # official Wikifier supported languages
+
 app = FastAPI()
 nlp = spacy.load("en_core_web_sm")
 
@@ -48,6 +51,7 @@ if not WIKIFIER_API_KEY:
 # ======= Pydantic model =======
 class TextInput(BaseModel):
     text: str
+    lang: Optional[str] = "en"
 
 
 # ======= Utility functions =======
@@ -178,11 +182,11 @@ def get_coordinates_from_wikidata(qid):
     return None
 
 
-def analyze_text(text):
+def analyze_text(text, lang="en"):
     entities_spacy = extract_geo_entity(text)
     print(f"\nEntities found by spaCy: {entities_spacy}")
 
-    annotations = disambiguation_with_wikifier(text)
+    annotations = disambiguation_with_wikifier(text, lang)
     entities = []
     processed_qids = set()
 
@@ -234,7 +238,7 @@ def analyze_text(text):
             print(f"❌ Error with {label}: {e}")
 
     for ent_text in entities_spacy:
-        ent_annotations = disambiguation_with_wikifier(ent_text)
+        ent_annotations = disambiguation_with_wikifier(ent_text, lang)
         for ann in ent_annotations:
             process_annotation(ann)
 
@@ -249,7 +253,10 @@ def analyze_text(text):
 @app.post("/analyze")
 def analyze_input_text(payload: TextInput):
     try:
-        results = analyze_text(payload.text)
+        lang = payload.lang.lower()
+        if lang not in SUPPORTED_LANGUAGES:
+            lang = "en"
+        results = analyze_text(payload.text, lang=lang)
         return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -262,7 +269,10 @@ def analyze_and_get_geoSPARQL(data: TextInput, download: bool = True):
         else downloadable .jsonld file
     """
     try:
-        results = analyze_text(data.text)
+        lang = data.lang.lower()
+        if lang not in SUPPORTED_LANGUAGES:
+            lang = "en"
+        results = analyze_text(data.text, lang=lang)
 
         features = []
         for res in results:
