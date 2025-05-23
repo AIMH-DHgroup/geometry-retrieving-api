@@ -32,7 +32,7 @@ curl -X POST "http://127.0.0.1:8000/geosparql" \
 The endpoints are ``/analyze`` and ``/geosparql`` and the latter has the ``download`` option set to ``true`` by default but you can pass ``false`` with: ``http://127.0.0.1:8000/geosparql?download=false``.
 
 ## Supported languages
-The list was taken by Spacy and Wikifier's documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "xx" (multi language).
+The list was taken by Spacy and Wikifier's documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French - France), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "xx" (multi language).
 
 ## Help/Feedback
 If you need help or want to leave feedback, check out the discussions [here](https://github.com/AIMH-DHgroup/geometry-retrieving-api/discussions) or start a new one.
