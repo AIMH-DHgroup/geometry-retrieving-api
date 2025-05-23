@@ -4,17 +4,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
-#from typing import List
+from langdetect import detect
 from uuid import uuid4
-#from pathlib import Path
 import spacy
-import requests
 import time
-#from shapely import wkt
-#from shapely.geometry import Polygon, MultiPolygon
 import json
 import os
-#from spacy.cli import download
 
 # ======= Init =======
 
@@ -38,10 +33,26 @@ GEOSPARQL_CONTEXT = {
     }
 }
 
-SUPPORTED_LANGUAGES = ["en", "it", "de", "fr", "es", "ru", "pl", "pt"]  # official Wikifier supported languages
+SUPPORTED_LANGUAGES = ["en", "it", "de", "fr", "es", "pt", "nl", "ru", "pl", "xx"]  # official Wikifier supported languages
+
+not_supported_message = "Language not supported. Please insert one value among \'en\' (English), \'it\' (Italian), \'fr\' (French), \'de\' (Deutsch), \'ru\' (Russian), \'pt\' (Portuguese), \'es\' (Spanish), \'nl\' (Dutch) , \'pl\' (Polish) or \'xx\' (for multi language texts)."
 
 app = FastAPI()
-nlp = spacy.load("en_core_web_sm")
+
+SPACY_MODELS = {
+    "en": "en_core_web_sm",
+    "it": "it_core_news_sm",
+    "de": "de_core_news_sm",
+    "fr": "fr_core_news_sm",
+    "es": "es_core_news_sm",
+    "pt": "pt_core_news_sm",
+    "nl": "nl_core_news_sm",
+    "ru": "ru_core_news_sm",
+    "pl": "pl_core_news_sm",
+    "xx": "xx_ent_wiki_sm" # multilanguage
+}
+
+loaded_models = {}
 
 WIKIFIER_API_KEY = os.getenv("WIKIFIER_API_KEY")
 if not WIKIFIER_API_KEY:
@@ -56,8 +67,23 @@ class TextInput(BaseModel):
 
 # ======= Utility functions =======
 
-def extract_geo_entity(text):
+def get_spacy_model(lang="en"):
+    model_name = SPACY_MODELS.get(lang, "en_core_web_sm")
+    if model_name not in loaded_models:
+        try:
+            loaded_models[model_name] = spacy.load(model_name)
+        except OSError:
+            print(f"⚠️ spaCy model '{model_name}' not found. Use fallback 'en_core_web_sm'.")
+            model_name = "en_core_web_sm"
+            loaded_models[model_name] = spacy.load(model_name)
+    return loaded_models[model_name]
+
+def tokenize_text(text, lang="en"):
+    nlp = get_spacy_model(lang)
     doc = nlp(text)
+    return doc, nlp
+
+def extract_geo_entity(doc):
     return [ent.text for ent in doc.ents if ent.label_ in ["LOC", "GPE", "NOUN", "PROPN"]]
 
 def disambiguation_with_wikifier(text, lang="en"):
@@ -70,7 +96,7 @@ def disambiguation_with_wikifier(text, lang="en"):
         "pageRankSqThreshold": "0.8",
         "applyFilters": "true",
         "filterCategories": "true",
-        "threshold": "0.8"
+        "threshold": "0.8",
     }
     response = requests.post(url, data=data)
     response.raise_for_status()
@@ -181,69 +207,175 @@ def get_coordinates_from_wikidata(qid):
             return lat, lon
     return None
 
+import requests
+
+def fallback_wikidata_search(entity_text, lang="en"):
+    """
+    Search for an entity on Wikidata using the search bar (wbsearchentities API),
+    similar to the website behavior.
+    Returns the first result if available.
+    """
+    url = "https://www.wikidata.org/w/api.php"
+    params = {
+        "action": "wbsearchentities",
+        "search": entity_text,
+        "language": lang,
+        "format": "json",
+        "limit": 1
+    }
+
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+
+    if data.get("search"):
+        result = data["search"][0]
+        return {
+            "wikiDataItemId": result["id"],
+            "title": result.get("label", entity_text),
+            "description": result.get("description", "")
+        }
+
+    return None
+
+def segment_by_language(text, nlp):
+    segments = []
+    current_lang = None
+    current_block = []
+
+    if "sentencizer" not in nlp.pipe_names:
+        nlp.add_pipe("sentencizer")
+
+    doc = nlp(text)
+
+    for sent in doc.sents:
+        sent_text = sent.text.strip()
+        if not sent_text:
+            continue
+
+        try:
+            lang = detect(sent_text)
+        except:
+            lang = "en"  # fallback
+
+        if lang != current_lang:
+            if current_block:
+                segments.append({
+                    "lang": current_lang,
+                    "text": " ".join(current_block)
+                })
+            current_block = [sent_text]
+            current_lang = lang
+        else:
+            current_block.append(sent_text)
+
+    if current_block:
+        segments.append({
+            "lang": current_lang,
+            "text": " ".join(current_block)
+        })
+
+    return segments
+
+def process_annotation(annotation, processed_qids, entities):
+    try:
+        qid = annotation["wikiDataItemId"]
+        label = annotation["title"]
+    except KeyError as e:
+        print(f"\n⚠️ Warning. The key {e} is missing from the annotation '{annotation['title']}'.")
+        return
+
+    if qid in processed_qids:
+        return
+
+    try:
+        if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
+            return
+        print(f"\n🔍 Entity check: {label} ({qid})...")
+        osm_id = get_osm_relation_id(qid)
+        print(f"✔️ It is geographic - OSM ID: {osm_id}")
+        vkt = None
+        if osm_id:
+            coords = get_geometry_from_osm(osm_id)
+            if coords:
+                vkt = convert_to_vkt(coords)
+            else:
+                print("⚠️ No OSM geometry found. Trying with coordinates...")
+        if not vkt:
+            coords_point = get_coordinates_from_wikidata(qid)
+            if coords_point:
+                lat, lon = coords_point
+                vkt = f"POINT ({lon} {lat})"
+                print(f"📍 Coordinates found: {lat}, {lon}")
+                print(f"📍 VKT: {vkt[:80]}..." if vkt else "⚠️ No valid geometry.")
+        else:
+            geom_type = vkt.split()[0]
+            print(f"📐 Geometry type: {geom_type}")
+        entities.append({
+            "label": label,
+            "qid": qid,
+            "description": annotation.get("description"),
+            "wikidata_url": f"https://www.wikidata.org/wiki/{qid}",
+            "osm_id": osm_id,
+            "vkt": vkt,
+            "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
+        })
+        processed_qids.add(qid)
+        time.sleep(1)  # Avoid rate limit
+    except Exception as e:
+        print(f"❌ Error with {label}: {e}")
+
+def analyze(annotation_text, entities, processed_qids):
+    for ann in annotation_text:
+        process_annotation(ann, processed_qids, entities)
+
+def detect_spacy_and_fallback(entities_spacy, processed_qids, entities, lg, to_detect):
+    for ent_text in entities_spacy:
+
+        if to_detect:
+            try:
+                lg = detect(ent_text)
+            except:
+                lg = "en"  # fallback
+
+        ent_annotations = disambiguation_with_wikifier(ent_text, lg)
+        if not ent_annotations:
+            print(f"\n⚠️ No annotations from Wikifier for: '({lg}) {ent_text}', trying fallback...")
+            fallback_result = fallback_wikidata_search(ent_text, lg)
+            if fallback_result:
+                process_annotation(fallback_result, processed_qids, entities)
+
+        else:
+            for ann in ent_annotations:
+                process_annotation(ann, processed_qids, entities)
 
 def analyze_text(text, lang="en"):
-    entities_spacy = extract_geo_entity(text)
-    print(f"\nEntities found by spaCy: {entities_spacy}")
+    doc, nlp = tokenize_text(text, lang=lang)
+    entities_spacy = extract_geo_entity(doc)
+    print(f"\nEntities found by spaCy: {', '.join(entities_spacy)}")
 
-    annotations = disambiguation_with_wikifier(text, lang)
     entities = []
     processed_qids = set()
 
-    def process_annotation(annotation):
-        try:
-            qid = annotation["wikiDataItemId"]
-            label = annotation["title"]
-        except KeyError:
-            return
+    # workflow: Wikifier disambiguation of the entities found by spaCy and then repeat the disambiguation of all the text by Wikifier
+    # the difference between mixed language and a single one is that in the first case we need to detect the language of each phrase
+    if lang == "xx":
 
-        if qid in processed_qids:
-            return
+        detect_spacy_and_fallback(entities_spacy, processed_qids, entities, lang, to_detect=True)
 
-        try:
-            if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
-                return
-            print(f"\n🔍 Entity check: {label} ({qid})...")
-            osm_id = get_osm_relation_id(qid)
-            print(f"✔️ It is geographic - OSM ID: {osm_id}")
-            vkt = None
-            if osm_id:
-                coords = get_geometry_from_osm(osm_id)
-                if coords:
-                    vkt = convert_to_vkt(coords)
-                else:
-                    print("⚠️ No OSM geometry found. Trying with coordinates...")
-            if not vkt:
-                coords_point = get_coordinates_from_wikidata(qid)
-                if coords_point:
-                    lat, lon = coords_point
-                    vkt = f"POINT ({lon} {lat})"
-                    print(f"📍 Coordinates found: {lat}, {lon}")
-                    print(f"📍 VKT: {vkt[:80]}..." if vkt else "⚠️ No valid geometry.")
-            else:
-                geom_type = vkt.split()[0]
-                print(f"📐 Geometry type: {geom_type}")
-            entities.append({
-                "label": label,
-                "qid": qid,
-                "description": annotation.get("description"),
-                "wikidata_url": f"https://www.wikidata.org/wiki/{qid}",
-                "osm_id": osm_id,
-                "vkt": vkt,
-                "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
-            })
-            processed_qids.add(qid)
-            time.sleep(1)  # Avoid rate limit
-        except Exception as e:
-            print(f"❌ Error with {label}: {e}")
+        # then try again and leave to Wikifier all the tasks
+        multilingual_segments = segment_by_language(text, nlp)
 
-    for ent_text in entities_spacy:
-        ent_annotations = disambiguation_with_wikifier(ent_text, lang)
-        for ann in ent_annotations:
-            process_annotation(ann)
+        for segment in multilingual_segments:
+            entities_temp = []
+            annotations = disambiguation_with_wikifier(segment['text'], lang=segment['lang'])
+            analyze(annotations, entities_temp, processed_qids)
+            entities.extend(entities_temp)
 
-    for ann in annotations:
-        process_annotation(ann)
+    else:
+        detect_spacy_and_fallback(entities_spacy, processed_qids, entities, lang, to_detect=False)
+        annotations = disambiguation_with_wikifier(text, lang)
+        analyze(annotations, entities, processed_qids)
 
     return entities
 
@@ -255,7 +387,7 @@ def analyze_input_text(payload: TextInput):
     try:
         lang = payload.lang.lower()
         if lang not in SUPPORTED_LANGUAGES:
-            lang = "en"
+            return {not_supported_message}
         results = analyze_text(payload.text, lang=lang)
         return {"results": results}
     except Exception as e:
@@ -271,7 +403,7 @@ def analyze_and_get_geoSPARQL(data: TextInput, download: bool = True):
     try:
         lang = data.lang.lower()
         if lang not in SUPPORTED_LANGUAGES:
-            lang = "en"
+            return {not_supported_message}
         results = analyze_text(data.text, lang=lang)
 
         features = []
