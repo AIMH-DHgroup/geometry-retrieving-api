@@ -52,6 +52,7 @@ pymorphy3==2.0.3
 pymorphy3-dicts-ru==2.4.417150.4580142
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
+python-multipart==0.0.20
 rdflib==7.1.4
 requests==2.32.3
 rich==14.0.0

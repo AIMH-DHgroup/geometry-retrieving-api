@@ -2,11 +2,14 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi import UploadFile, File
+import xml.etree.ElementTree as ET
 from pydantic import BaseModel
 from typing import Optional
 from langdetect import detect
 from uuid import uuid4
 import spacy
+import requests
 import time
 import json
 import os
@@ -382,19 +385,8 @@ def analyze_text(text, lang="en"):
 
 # ======= FastAPI endpoints =======
 
-@app.post("/analyze")
-def analyze_input_text(payload: TextInput):
-    try:
-        lang = payload.lang.lower()
-        if lang not in SUPPORTED_LANGUAGES:
-            return {not_supported_message}
-        results = analyze_text(payload.text, lang=lang)
-        return {"results": results}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.post("/geosparql")
-def analyze_and_get_geoSPARQL(data: TextInput, download: bool = True):
+def analyze_from_input(data: TextInput, download: bool = True):
     """
         Return JSON‑LD compliant with GeoSPARQL.
         ?download=false --> JSON inline
@@ -443,5 +435,85 @@ def analyze_and_get_geoSPARQL(data: TextInput, download: bool = True):
 
         return FileResponse(path, media_type="application/ld+json", filename=filename)
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/analyze-from-xml")
+async def analyze_from_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
+    """
+    Parse an uploaded XML file,
+    extract text from a specific node,
+    and start to analyze.
+    """
+    try:
+        lang = lang.lower()
+        if lang not in SUPPORTED_LANGUAGES:
+            return JSONResponse(status_code=400, content={"error": not_supported_message})
+
+        content = await file.read()
+        tree = ET.ElementTree(ET.fromstring(content))
+        root = tree.getroot()
+
+        ns = {'ns': 'http://www.w3.org/2005/sparql-results#'}
+
+        literals = root.findall(".//ns:binding[@name='o']/ns:literal", namespaces=ns)
+
+        if not literals:
+            return JSONResponse(status_code=400, content={"error": "No <text> nodes found in the XML file."})
+
+        #full_text = " ".join([literal.text.strip() for literal in literals if literal.text])
+        #if not full_text:
+        #    return JSONResponse(status_code=400, content={"error": "Empty text in the XML file."})
+
+        #results = analyze_text(full_text, lang=lang)
+        #return {"results": results}
+
+        features = []
+        for literal in literals:
+            text = literal.text.strip() if literal.text else ""
+            if text:
+                results = analyze_text(text, lang=lang)
+                for res in results:
+                    if res["vkt"]:
+                        feature_id = f"wd:{res['qid']}"
+                        geometry_obj = {
+                            "@id": f"{feature_id}-geom",
+                            "@type": "Geometry",
+                            "asWKT": f"SRID=4326;{res['vkt']}"
+                        }
+                        feature = {
+                            "@id": feature_id,
+                            "@type": "Feature",
+                            "label": res["label"],
+                            "description": res["description"],
+                            "qid": res["qid"],
+                            "wikidata": res["wikidata_url"],
+                            "osm_id": res["osm_id"],
+                            "hasGeometry": geometry_obj,
+                            "source_text": text
+                        }
+                        features.append(feature)
+            else:
+                print("Missing text for literal", literal)
+
+        geosparql_doc = {
+            **GEOSPARQL_CONTEXT,
+            "@graph": features
+        }
+
+        if not download:
+            return JSONResponse(content=geosparql_doc,
+                                media_type="application/ld+json")
+
+        filename = f"geosparql_{uuid4().hex}.jsonld"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/ld+json", filename=filename)
+
+    except ET.ParseError:
+        raise HTTPException(status_code=400, detail="XML file not valid.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
