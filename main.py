@@ -383,6 +383,17 @@ def analyze_text(text, lang="en"):
 
     return entities
 
+def perform_sparql_query(query: str):
+    endpoint = "https://query.wikidata.org/sparql"
+    headers = {
+        "Accept": "application/sparql-results+json"
+    }
+    response = requests.get(endpoint, params={"query": query}, headers=headers)
+    if response.status_code == 200:
+        return response.json().get("results", {}).get("bindings", [])
+    else:
+        return []
+
 
 # ======= FastAPI endpoints =======
 
@@ -530,12 +541,29 @@ async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geona
         if lang not in SUPPORTED_LANGUAGES:
             return JSONResponse(status_code=400, content={"error": not_supported_message})
 
-        match = re.search(r'/([^/]+)\.html$', iri)
+        match = re.search(r'/(\d+)/', iri)
         if not match:
-            return JSONResponse(status_code=400, content={"error": "Unable to extract label from GeoNames IRI."})
+            return JSONResponse(status_code=400, content={"error": "Invalid GeoNames IRI format."})
 
-        name = match.group(1)
-        label = name.replace('-', ' ').replace('_', ' ').title()  # migliora leggibilità: "south-korea" -> "South Korea"
+        geonames_id = match.group(1)
+
+        sparql_query = f"""
+                SELECT ?item ?itemLabel WHERE {{
+                  ?item wdt:P1566 "{geonames_id}".
+                  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{lang}" }}
+                }}
+                """
+
+        results = perform_sparql_query(sparql_query)
+        if not results:
+            return JSONResponse(status_code=404,
+                                content={"error": f"No Wikidata entity found for GeoNames ID {geonames_id}."})
+
+        binding = results[0]
+        label = binding.get("itemLabel", {}).get("value")
+
+        if not label:
+            return JSONResponse(status_code=404, content={"error": "No label found for matching Wikidata entity."})
 
         results = analyze_text(label, lang=lang)
 
@@ -556,8 +584,7 @@ async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geona
                     "qid": res["qid"],
                     "wikidata": res["wikidata_url"],
                     "osm_id": res["osm_id"],
-                    "hasGeometry": geometry_obj,
-                    "source_text": label
+                    "hasGeometry": geometry_obj
                 }
                 features.append(feature)
             else:
