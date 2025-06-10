@@ -1,6 +1,6 @@
 # ======= Import libraries =======
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi import UploadFile, File
 import xml.etree.ElementTree as ET
@@ -13,6 +13,7 @@ import requests
 import time
 import json
 import os
+import re
 
 # ======= Init =======
 
@@ -515,5 +516,68 @@ async def analyze_from_xml(file: UploadFile = File(...), lang: Optional[str] = "
 
     except ET.ParseError:
         raise HTTPException(status_code=400, detail="XML file not valid.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/analyze-from-iri")
+async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geonames (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Analysis language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
+    """
+    Analyze a GeoNames data page using IRI.
+    Extract the main content and apply the geographic disambiguation process.
+    """
+    try:
+        lang = lang.lower()
+        if lang not in SUPPORTED_LANGUAGES:
+            return JSONResponse(status_code=400, content={"error": not_supported_message})
+
+        match = re.search(r'/([^/]+)\.html$', iri)
+        if not match:
+            return JSONResponse(status_code=400, content={"error": "Unable to extract label from GeoNames IRI."})
+
+        name = match.group(1)
+        label = name.replace('-', ' ').replace('_', ' ').title()  # migliora leggibilità: "south-korea" -> "South Korea"
+
+        results = analyze_text(label, lang=lang)
+
+        features = []
+        for res in results:
+            if res["vkt"]:
+                feature_id = f"wd:{res['qid']}"
+                geometry_obj = {
+                    "@id": f"{feature_id}-geom",
+                    "@type": "Geometry",
+                    "asWKT": f"SRID=4326;{res['vkt']}"
+                }
+                feature = {
+                    "@id": feature_id,
+                    "@type": "Feature",
+                    "label": res["label"],
+                    "description": res["description"],
+                    "qid": res["qid"],
+                    "wikidata": res["wikidata_url"],
+                    "osm_id": res["osm_id"],
+                    "hasGeometry": geometry_obj,
+                    "source_text": label
+                }
+                features.append(feature)
+            else:
+                print("Missing text for ", res)
+
+        geosparql_doc = {
+            **GEOSPARQL_CONTEXT,
+            "@graph": features
+        }
+
+        if not download:
+            return JSONResponse(content=geosparql_doc,
+                                media_type="application/ld+json")
+
+        filename = f"geosparql_{uuid4().hex}.jsonld"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/ld+json", filename=filename)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
