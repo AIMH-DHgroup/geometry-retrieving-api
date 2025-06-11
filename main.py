@@ -11,6 +11,7 @@ from uuid import uuid4
 import spacy
 import requests
 import time
+import pandas as pd
 import json
 import os
 import re
@@ -281,20 +282,15 @@ def segment_by_language(text, nlp):
 
     return segments
 
-def process_annotation(annotation, processed_qids, entities):
+def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry):
     try:
-        qid = annotation["wikiDataItemId"]
-        label = annotation["title"]
-    except KeyError as e:
-        print(f"\n⚠️ Warning. The key {e} is missing from the annotation '{annotation['title']}'.")
-        return
-
-    if qid in processed_qids:
-        return
-
-    try:
-        if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
-            return
+        if not only_geometry:
+            if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
+                return
+        else:
+            if qid in processed_qids:
+                print(f"\n⚠️ Skipping {qid}, already processed.")
+                return
         print(f"\n🔍 Entity check: {label} ({qid})...")
         osm_id = get_osm_relation_id(qid)
         print(f"✔️ It is geographic - OSM ID: {osm_id}")
@@ -315,19 +311,41 @@ def process_annotation(annotation, processed_qids, entities):
         else:
             geom_type = vkt.split()[0]
             print(f"📐 Geometry type: {geom_type}")
+
+        if not only_geometry:
+            description = annotation.get("description")
+        else:
+            description = ""
+
         entities.append({
             "label": label,
             "qid": qid,
-            "description": annotation.get("description"),
+            "description": description,
             "wikidata_url": f"https://www.wikidata.org/wiki/{qid}",
             "osm_id": osm_id,
             "vkt": vkt,
             "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
         })
         processed_qids.add(qid)
-        time.sleep(1)  # Avoid rate limit
+        time.sleep(3)  # Avoid rate limit
+
+        if only_geometry:
+            return entities
     except Exception as e:
         print(f"❌ Error with {label}: {e}")
+
+def process_annotation(annotation, processed_qids, entities):
+    try:
+        qid = annotation["wikiDataItemId"]
+        label = annotation["title"]
+    except KeyError as e:
+        print(f"\n⚠️ Warning. The key {e} is missing from the annotation '{annotation['title']}'.")
+        return
+
+    if qid in processed_qids:
+        return
+
+    retrieve_geometry(annotation, label, qid, entities, processed_qids, False)
 
 def analyze(annotation_text, entities, processed_qids):
     for ann in annotation_text:
@@ -589,6 +607,114 @@ async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geona
                 features.append(feature)
             else:
                 print("Missing text for ", res)
+
+        geosparql_doc = {
+            **GEOSPARQL_CONTEXT,
+            "@graph": features
+        }
+
+        if not download:
+            return JSONResponse(content=geosparql_doc,
+                                media_type="application/ld+json")
+
+        filename = f"geosparql_{uuid4().hex}.jsonld"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/ld+json", filename=filename)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/analyze-from-csv")
+async def analyze_geonames_csv(
+    file: UploadFile = File(..., description="CSV file with a 'geonames' column containing GeoNames IRIs"),
+    #lang: str = Query("en", description="Analysis language"),
+    download: bool = Query(False, description="If True, return a downloadable .jsonld")
+):
+    """
+    Analyze a CSV file containing GeoNames IRIs in the 'geonames' column.
+    Extract the main content and apply the disambiguation process.
+    """
+    try:
+        #lang = lang.lower()
+        #if lang not in SUPPORTED_LANGUAGES:
+        #    return JSONResponse(status_code=400, content={"error": not_supported_message})
+
+        content = await file.read()
+        df = pd.read_csv(pd.io.common.BytesIO(content))
+
+        if "geonames" not in df.columns:
+            return JSONResponse(status_code=400, content={"error": "Missing 'geonames' column in CSV."})
+
+        features = []
+
+        processed_geonames_id = set()
+
+        for iri in df["geonames"].dropna().unique():
+            match = re.search(r'/(\d+)/', iri)
+            if not match:
+                continue  # skip invalid IRI
+
+            geonames_id = match.group(1)
+
+            if geonames_id in processed_geonames_id:
+                print(f"\n⚠️ Skipping '{iri}', already processed.")
+                continue    # skip IRI already processed
+
+            sparql_query = f"""
+                        SELECT ?item ?itemLabel WHERE {{
+                          ?item wdt:P1566 "{geonames_id}".
+                          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+                        }}
+                    """ # {lang}
+            results = perform_sparql_query(sparql_query)
+            if not results:
+                print(f"\n⚠️ Skipping '{iri}', query returned no results.")
+                continue
+
+            binding = results[0]
+            label = binding.get("itemLabel", {}).get("value")
+            url = binding.get("item", {}).get("value")
+            match_id = re.search(r"wikidata\.org/entity/(Q\d+)", url)
+            qid = match_id.group(1)
+            if not qid:
+                raise HTTPException(status_code=500, detail="Wikidata ID not found.")
+            if not label:
+                print(f"\n⚠️ Skipping '{iri}', label not found.")
+                continue
+
+            entities = []
+            processed_qids = set()
+
+            geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+
+            #results = analyze_text(label, lang=lang)
+
+            for g in geometry:
+                if g["vkt"]:
+                    feature_id = f"wd:{g['qid']}"
+                    geometry_obj = {
+                        "@id": f"{feature_id}-geom",
+                        "@type": "Geometry",
+                        "asWKT": f"SRID=4326;{g['vkt']}"
+                    }
+                    feature = {
+                        "@id": feature_id,
+                        "@type": "Feature",
+                        "label": g["label"],
+                        "description": g["description"],
+                        "qid": g["qid"],
+                        "wikidata": g["wikidata_url"],
+                        "osm_id": g["osm_id"],
+                        "hasGeometry": geometry_obj
+                    }
+                    features.append(feature)
+                else:
+                    print("Missing text for ", g)
+
+            processed_geonames_id.add(iri)
 
         geosparql_doc = {
             **GEOSPARQL_CONTEXT,
