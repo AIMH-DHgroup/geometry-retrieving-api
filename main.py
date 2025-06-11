@@ -15,6 +15,30 @@ import pandas as pd
 import json
 import os
 import re
+import logging
+
+# ======= Logger =======
+
+# Logger config
+logger = logging.getLogger("warnings_logger")
+logger.setLevel(logging.INFO)
+
+# File handler
+file_handler = logging.FileHandler("warnings.log", mode="w", encoding="utf-8")
+file_handler.setLevel(logging.INFO)
+file_formatter = logging.Formatter('%(asctime)s - %(message)s')
+file_handler.setFormatter(file_formatter)
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_formatter = logging.Formatter('%(message)s')
+console_handler.setFormatter(console_formatter)
+
+# add handlers to logger
+if not logger.hasHandlers():
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
 # ======= Init =======
 
@@ -655,12 +679,13 @@ async def analyze_geonames_csv(
         for iri in df["geonames"].dropna().unique():
             match = re.search(r'/(\d+)/', iri)
             if not match:
+                logger.warning(f"\n⚠️ Skipping {iri}, it is not a valid GeoNames IRI format.")
                 continue  # skip invalid IRI
 
             geonames_id = match.group(1)
 
             if geonames_id in processed_geonames_id:
-                print(f"\n⚠️ Skipping '{iri}', already processed.")
+                logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
                 continue    # skip IRI already processed
 
             sparql_query = f"""
@@ -671,7 +696,7 @@ async def analyze_geonames_csv(
                     """ # {lang}
             results = perform_sparql_query(sparql_query)
             if not results:
-                print(f"\n⚠️ Skipping '{iri}', query returned no results.")
+                logger.warning(f"\n⚠️ Skipping '{iri}', query returned no results.")
                 continue
 
             binding = results[0]
@@ -682,7 +707,7 @@ async def analyze_geonames_csv(
             if not qid:
                 raise HTTPException(status_code=500, detail="Wikidata ID not found.")
             if not label:
-                print(f"\n⚠️ Skipping '{iri}', label not found.")
+                logger.warning(f"\n⚠️ Skipping '{iri}', label not found.")
                 continue
 
             entities = []
@@ -712,7 +737,7 @@ async def analyze_geonames_csv(
                     }
                     features.append(feature)
                 else:
-                    print("Missing text for ", g)
+                    logger.warning(f"\n⚠️ Missing geometry for {g}")
 
             processed_geonames_id.add(iri)
 
