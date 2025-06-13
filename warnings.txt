@@ -1,0 +1,62 @@
+2025-06-13 16:22:48,772 - 
+⚠️ Skipping 'https://sws.geonames.org/2805385/', queries returned no results.
+2025-06-13 16:22:53,695 - 
+⚠️ Skipping 'https://sws.geonames.org/2921502/', queries returned no results.
+2025-06-13 16:23:45,311 - 
+⚠️ Skipping 'https://sws.geonames.org/2841473/', queries returned no results.
+2025-06-13 16:25:00,546 - 
+⚠️ Skipping 'https://sws.geonames.org/11186403/', queries returned no results.
+2025-06-13 16:25:06,033 - 
+⚠️ Skipping 'https://sws.geonames.org/11808616', queries returned no results.
+2025-06-13 16:25:45,387 - 
+⚠️ Skipping 'https://sws.geonames.org/262365/', queries returned no results.
+2025-06-13 16:27:40,074 - 
+⚠️ Skipping 'https://sws.geonames.org/444574/', queries returned no results.
+2025-06-13 16:27:40,408 - 
+⚠️ Skipping 'https://sws.geonames.org/444629/', queries returned no results.
+2025-06-13 16:27:40,736 - 
+⚠️ Skipping 'https://sws.geonames.org/444846/', queries returned no results.
+2025-06-13 16:27:41,114 - 
+⚠️ Skipping 'https://sws.geonames.org/444875/', queries returned no results.
+2025-06-13 16:27:41,451 - 
+⚠️ Skipping 'https://sws.geonames.org/444705/', queries returned no results.
+2025-06-13 16:29:32,921 - 
+⚠️ Skipping 'https://sws.geonames.org/2785432/', queries returned no results.
+2025-06-13 16:29:58,509 - 
+⚠️ Skipping 'https://sws.geonames.org/2956553', queries returned no results.
+2025-06-13 16:30:38,504 - 
+⚠️ Missing geometry for {'label': 'Cilicia', 'qid': 'Q4819648', 'description': '', 'wikidata_url': 'https://www.wikidata.org/wiki/Q4819648', 'osm_id': None, 'vkt': None, 'wkt': 'SRID=4326;None'}
+2025-06-13 16:33:57,203 - 
+⚠️ Skipping 'https://sws.geonames.org/4966378/', queries returned no results.
+2025-06-13 16:34:11,638 - 
+⚠️ Skipping 'https://sws.geonames.org/2981238/', queries returned no results.
+2025-06-13 16:35:40,360 - 
+⚠️ Skipping 'https://sws.geonames.org/3036295/', queries returned no results.
+2025-06-13 16:36:31,100 - 
+⚠️ Skipping 'https://sws.geonames.org/2509402', queries returned no results.
+2025-06-13 16:36:36,089 - 
+⚠️ Skipping 'https://sws.geonames.org/2509402/', queries returned no results.
+2025-06-13 16:38:32,879 - 
+⚠️ Skipping 'https://sws.geonames.org/2988506/', queries returned no results.
+2025-06-13 16:41:16,401 - 
+⚠️ Skipping 'https://sws.geonames.org/12060420/', queries returned no results.
+2025-06-13 16:41:59,765 - 
+⚠️ Skipping 'https://sws.geonames.org/3035498/', queries returned no results.
+2025-06-13 16:42:00,141 - 
+⚠️ Skipping 'https://sws.geonames.org/2978742/', queries returned no results.
+2025-06-13 16:42:10,153 - 
+⚠️ Skipping 'https://sws.geonames.org/3038174/', queries returned no results.
+2025-06-13 16:42:20,258 - 
+⚠️ Skipping 'https://sws.geonames.org/3024264/', queries returned no results.
+2025-06-13 16:44:12,018 - 
+⚠️ Skipping 'https://www.geonames.org/3182351/bari.html', queries returned no results.
+2025-06-13 16:46:37,608 - 
+⚠️ Skipping 'https://sws.geonames.org/263322/', queries returned no results.
+2025-06-13 16:51:59,556 - 
+⚠️ Skipping 'https://www.geonames.org/6355234/murcia.html', queries returned no results.
+2025-06-13 16:52:40,975 - 
+⚠️ Skipping 'https://www.geonames.org/263091/dilos.html', queries returned no results.
+2025-06-13 16:52:46,125 - 
+⚠️ Skipping 'https://sws.geonames.org/2996019', queries returned no results.
+2025-06-13 16:52:55,901 - 
+⚠️ Skipping 'https://sws.geonames.org/3037631', queries returned no results.

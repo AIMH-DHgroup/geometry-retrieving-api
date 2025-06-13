@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
+from urllib.parse import urlparse, unquote
 from fastapi import UploadFile, File
 import xml.etree.ElementTree as ET
 from pydantic import BaseModel
@@ -16,6 +17,8 @@ import json
 import os
 import re
 import logging
+import sys
+import traceback
 
 # ======= Logger =======
 
@@ -24,7 +27,7 @@ logger = logging.getLogger("warnings_logger")
 logger.setLevel(logging.INFO)
 
 # File handler
-file_handler = logging.FileHandler("warnings.log", mode="w", encoding="utf-8")
+file_handler = logging.FileHandler("warnings.txt", mode="w", encoding="utf-8")
 file_handler.setLevel(logging.INFO)
 file_formatter = logging.Formatter('%(asctime)s - %(message)s')
 file_handler.setFormatter(file_formatter)
@@ -41,6 +44,9 @@ if not logger.hasHandlers():
     logger.addHandler(console_handler)
 
 # ======= Init =======
+
+class WikipediaRateLimitException(Exception):
+    pass
 
 GEOSPARQL_CONTEXT = {
     "@context": {
@@ -351,12 +357,15 @@ def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geo
             "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
         })
         processed_qids.add(qid)
-        time.sleep(3)  # Avoid rate limit
+        time.sleep(4)  # Avoid rate limit
 
         if only_geometry:
             return entities
     except Exception as e:
         print(f"❌ Error with {label}: {e}")
+        print("Retrying...")
+        time.sleep(10)
+        retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry)
 
 def process_annotation(annotation, processed_qids, entities):
     try:
@@ -435,6 +444,80 @@ def perform_sparql_query(query: str):
         return response.json().get("results", {}).get("bindings", [])
     else:
         return []
+
+
+def get_wikipedia_article_from_geonames(geonames_iri):
+    rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
+    response = requests.get(rdf_url)
+
+    if response.status_code == 200:
+        root = ET.fromstring(response.content)
+        ns = {
+            'gn': 'http://www.geonames.org/ontology#',
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        }
+
+        for wiki_elem in root.findall('.//gn:wikipediaArticle', ns):
+            url = wiki_elem.attrib.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+            if url and 'en.wikipedia.org' in url:
+                return url
+
+    return None
+
+def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "en") -> dict:
+    parsed_url = urlparse(wikipedia_url)
+    title = unquote(parsed_url.path.split("/wiki/")[-1])
+
+    wiki_api_url = f"https://{parsed_url.hostname}/w/api.php"
+    params = {
+        "action": "query",
+        "titles": title,
+        "prop": "pageprops",
+        "format": "json"
+    }
+
+    headers = {
+        "User-Agent": "MyPythonScript/1.0 (claudio.demartino@isti.cnr.it)"
+    }
+
+    try:
+        response = requests.get(wiki_api_url, params=params, headers=headers)
+
+        if response.status_code == 429:
+            raise WikipediaRateLimitException("Rate limit exceeded (HTTP 429). Try again later.")
+
+        response.raise_for_status()
+        data = response.json()
+
+        if "error" in data:
+            if data["error"].get("code") == "ratelimited":
+                raise WikipediaRateLimitException("Rate limit exceeded (API error 'ratelimited'). Try again later.")
+            else:
+                raise Exception(f"API returned an error: {data['error']}")
+
+        pages = data.get("query", {}).get("pages", {})
+        for page in pages.values():
+            wikidata_id = page.get("pageprops", {}).get("wikibase_item")
+            if wikidata_id:
+                wikidata_api_url = "https://www.wikidata.org/w/api.php"
+                label_params = {
+                    "action": "wbgetentities",
+                    "ids": wikidata_id,
+                    "format": "json",
+                    "props": "labels",
+                    "languages": language
+                }
+                wd_response = requests.get(wikidata_api_url, params=label_params, headers=headers)
+                wd_response.raise_for_status()
+                wd_data = wd_response.json()
+
+                label = wd_data.get("entities", {}).get(wikidata_id, {}).get("labels", {}).get(language, {}).get("value", "")
+                return {"id": wikidata_id, "label": label}
+
+        return {}
+
+    except requests.RequestException as e:
+        raise Exception(f"HTTP request failed: {e}")
 
 
 # ======= FastAPI endpoints =======
@@ -677,7 +760,7 @@ async def analyze_geonames_csv(
         processed_geonames_id = set()
 
         for iri in df["geonames"].dropna().unique():
-            match = re.search(r'/(\d+)/', iri)
+            match = re.search(r'/(\d+)', iri)
             if not match:
                 logger.warning(f"\n⚠️ Skipping {iri}, it is not a valid GeoNames IRI format.")
                 continue  # skip invalid IRI
@@ -696,26 +779,45 @@ async def analyze_geonames_csv(
                     """ # {lang}
             results = perform_sparql_query(sparql_query)
             if not results:
-                logger.warning(f"\n⚠️ Skipping '{iri}', query returned no results.")
-                continue
 
-            binding = results[0]
-            label = binding.get("itemLabel", {}).get("value")
-            url = binding.get("item", {}).get("value")
-            match_id = re.search(r"wikidata\.org/entity/(Q\d+)", url)
-            qid = match_id.group(1)
-            if not qid:
-                raise HTTPException(status_code=500, detail="Wikidata ID not found.")
-            if not label:
-                logger.warning(f"\n⚠️ Skipping '{iri}', label not found.")
-                continue
+                # try retrieving the Wikipedia URL and linking it to a Wikidata entity
+                try:
+
+                    wikipedia_url = get_wikipedia_article_from_geonames(iri)
+                    if wikipedia_url:
+                        wikidata_entity = get_wikidata_entity_from_wikipedia_url(wikipedia_url)
+                    else:
+                        logger.warning(f"\n⚠️ Skipping '{iri}', queries returned no results.")
+                        continue
+
+                    if not wikidata_entity:
+                        logger.warning(f"\n⚠️ Skipping '{iri}', queries returned no results.")
+                        continue
+
+                    label = wikidata_entity["label"]
+                    qid = wikidata_entity["id"]
+
+                except WikipediaRateLimitException as e:
+                    logger.warning(f"\n⚠️ Wikipedia rate limit exceeded: {e}. Skipping '{iri}'.")
+                    continue
+
+            else:
+
+                binding = results[0]
+                label = binding.get("itemLabel", {}).get("value")
+                url = binding.get("item", {}).get("value")
+                match_id = re.search(r"wikidata\.org/entity/(Q\d+)", url)
+                qid = match_id.group(1)
+                if not qid:
+                    raise HTTPException(status_code=500, detail="Wikidata ID not found.")
+                if not label:
+                    logger.warning(f"\n⚠️ Skipping '{iri}', label not found.")
+                    continue
 
             entities = []
             processed_qids = set()
 
             geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
-
-            #results = analyze_text(label, lang=lang)
 
             for g in geometry:
                 if g["vkt"]:
@@ -758,4 +860,7 @@ async def analyze_geonames_csv(
         return FileResponse(path, media_type="application/ld+json", filename=filename)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
