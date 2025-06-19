@@ -356,11 +356,15 @@ def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geo
             "vkt": vkt,
             "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
         })
-        processed_qids.add(qid)
+
+        if not only_geometry:
+            processed_qids.add(qid)
+
         time.sleep(4)  # Avoid rate limit
 
         if only_geometry:
             return entities
+
     except Exception as e:
         print(f"❌ Error with {label}: {e}")
         print("Retrying...")
@@ -464,6 +468,25 @@ def get_wikipedia_article_from_geonames(geonames_iri):
 
     return None
 
+def get_geonames_label(geonames_id):
+    #rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
+    rdf_url = f"https://www.geonames.org/{geonames_id}/about.rdf"
+    response = requests.get(rdf_url)
+
+    if response.status_code == 200:
+        root = ET.fromstring(response.content)
+        ns = {
+            'gn': 'http://www.geonames.org/ontology#',
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'rdfs': 'http://www.w3.org/2000/01/rdf-schema#'
+        }
+
+        label_elem = root.find('.//gn:name', ns)
+        if label_elem is not None and label_elem.text:
+            return label_elem.text
+
+    return None
+
 def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "en") -> dict:
     parsed_url = urlparse(wikipedia_url)
     title = unquote(parsed_url.path.split("/wiki/")[-1])
@@ -519,6 +542,38 @@ def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "
     except requests.RequestException as e:
         raise Exception(f"HTTP request failed: {e}")
 
+
+import requests
+
+
+def search_wikidata_entity(query, language='en'):
+    url = "https://www.wikidata.org/w/api.php"
+    params = {
+        "action": "wbsearchentities",
+        "format": "json",
+        "search": query,
+        "language": language,
+        "limit": 10
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        results = response.json().get("search", [])
+
+        for result in results:
+            entity_id = result["id"]
+            if is_geographic_entity(entity_id):
+                return {
+                    "id": result["id"],
+                    "label": result.get("label"),
+                    "description": result.get("description")
+                }
+
+    except requests.RequestException as e:
+        print(f"\n⚠️ Wikidata query error : {e}")
+
+    return None
 
 # ======= FastAPI endpoints =======
 
@@ -758,8 +813,11 @@ async def analyze_geonames_csv(
         features = []
 
         processed_geonames_id = set()
+        processed_qids = set()
 
         for iri in df["geonames"].dropna().unique():
+            entities = []
+
             match = re.search(r'/(\d+)', iri)
             if not match:
                 logger.warning(f"\n⚠️ Skipping {iri}, it is not a valid GeoNames IRI format.")
@@ -771,6 +829,8 @@ async def analyze_geonames_csv(
                 logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
                 continue    # skip IRI already processed
 
+            # TODO
+
             sparql_query = f"""
                         SELECT ?item ?itemLabel WHERE {{
                           ?item wdt:P1566 "{geonames_id}".
@@ -778,24 +838,160 @@ async def analyze_geonames_csv(
                         }}
                     """ # {lang}
             results = perform_sparql_query(sparql_query)
+
             if not results:
 
                 # try retrieving the Wikipedia URL and linking it to a Wikidata entity
                 try:
 
                     wikipedia_url = get_wikipedia_article_from_geonames(iri)
+
                     if wikipedia_url:
                         wikidata_entity = get_wikidata_entity_from_wikipedia_url(wikipedia_url)
                     else:
-                        logger.warning(f"\n⚠️ Skipping '{iri}', queries returned no results.")
-                        continue
+                        wikidata_entity = None
 
-                    if not wikidata_entity:
-                        logger.warning(f"\n⚠️ Skipping '{iri}', queries returned no results.")
-                        continue
+                    if wikidata_entity:
 
-                    label = wikidata_entity["label"]
-                    qid = wikidata_entity["id"]
+                        label = wikidata_entity["label"]
+                        qid = wikidata_entity["id"]
+
+                        if qid in processed_qids:
+                            logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
+                            continue
+
+                        geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+
+                        if geometry:
+                            for g in geometry:
+                                if g["vkt"]:
+                                    feature_id = f"wd:{g['qid']}"
+                                    geometry_obj = {
+                                        "@id": f"{feature_id}-geom",
+                                        "@type": "Geometry",
+                                        "asWKT": f"SRID=4326;{g['vkt']}"
+                                    }
+                                    feature = {
+                                        "@id": feature_id,
+                                        "@type": "Feature",
+                                        "label": g["label"],
+                                        "description": g["description"],
+                                        "qid": g["qid"],
+                                        "wikidata": g["wikidata_url"],
+                                        "osm_id": g["osm_id"],
+                                        "hasGeometry": geometry_obj
+                                    }
+
+                                    features.append(feature)
+                                    processed_geonames_id.add(geonames_id)
+
+                                else:
+                                    logger.warning(f"\n⚠️ Missing geometry for '{g['label']}', Wikidata URL: {g['wikidata_url']}. Skipping '{iri}'.")
+                                    continue
+                        else:
+                            logger.warning(f"\n⚠️ Missing geometry for '{iri}'. Skipping...")
+                            continue
+
+                    else:
+
+                        if wikipedia_url:
+                            parsed_url = urlparse(wikipedia_url)
+                            title = unquote(parsed_url.path.split("/wiki/")[-1])
+
+                            if not title:
+                                title = get_geonames_label(geonames_id)
+
+                        else:
+                            title = get_geonames_label(geonames_id)
+
+                        if title:
+                            if "_" in title:
+                                title = title.replace("_", " ")
+
+                            annotations = disambiguation_with_wikifier(title)
+                            analyze(annotations, entities, processed_qids)
+
+                            if not entities:
+
+                                entity = search_wikidata_entity(title)
+
+                                if not entity:
+                                    logger.warning(f"\n⚠️ Skipping '{iri}', no results found.")
+                                    continue
+
+                                label = entity["label"]
+                                qid = entity["id"]
+
+                                if qid in processed_qids:
+                                    logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
+                                    continue
+
+                                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+
+                                if geometry:
+                                    for g in geometry:
+                                        if g["vkt"]:
+                                            feature_id = f"wd:{g['qid']}"
+                                            geometry_obj = {
+                                                "@id": f"{feature_id}-geom",
+                                                "@type": "Geometry",
+                                                "asWKT": f"SRID=4326;{g['vkt']}"
+                                            }
+                                            feature = {
+                                                "@id": feature_id,
+                                                "@type": "Feature",
+                                                "label": g["label"],
+                                                "description": g["description"],
+                                                "qid": g["qid"],
+                                                "wikidata": g["wikidata_url"],
+                                                "osm_id": g["osm_id"],
+                                                "hasGeometry": geometry_obj
+                                            }
+
+                                            features.append(feature)
+                                            processed_geonames_id.add(geonames_id)
+
+                                        else:
+                                            logger.warning(
+                                                f"\n⚠️ Missing geometry for '{g['label']}', Wikidata URL: {g['wikidata_url']}. Skipping '{iri}'.")
+                                            continue
+                                else:
+                                    logger.warning(f"\n⚠️ Missing geometry for '{iri}'. Skipping...")
+                                    continue
+
+                                continue
+
+                            for e in entities:
+                                if e["vkt"]:
+                                    feature_id = f"wd:{e['qid']}"
+                                    geometry_obj = {
+                                        "@id": f"{feature_id}-geom",
+                                        "@type": "Geometry",
+                                        "asWKT": f"SRID=4326;{e['vkt']}"
+                                    }
+                                    feature = {
+                                        "@id": feature_id,
+                                        "@type": "Feature",
+                                        "label": e["label"],
+                                        "description": e["description"],
+                                        "qid": e["qid"],
+                                        "wikidata": e["wikidata_url"],
+                                        "osm_id": e["osm_id"],
+                                        "hasGeometry": geometry_obj
+                                    }
+                                    features.append(feature)
+                                    processed_geonames_id.add(geonames_id)
+
+                                else:
+                                    logger.warning(f"\n⚠️ Missing geometry for '{e['label']}, Wikidata URL: {e['wikidata_url']}'. Skipping '{iri}'.")
+                                    continue
+
+                            continue
+
+                        else:
+                            logger.warning(f"\n⚠️ Title is '{title}'. Skipping '{iri}'. Info: {wikipedia_url, wikidata_entity}.")
+                            continue
+
 
                 except WikipediaRateLimitException as e:
                     logger.warning(f"\n⚠️ Wikipedia rate limit exceeded: {e}. Skipping '{iri}'.")
@@ -809,39 +1005,47 @@ async def analyze_geonames_csv(
                 match_id = re.search(r"wikidata\.org/entity/(Q\d+)", url)
                 qid = match_id.group(1)
                 if not qid:
-                    raise HTTPException(status_code=500, detail="Wikidata ID not found.")
+                    logger.warning(f"\n⚠️ Skipping '{iri}', qid not found.")
+                    continue
                 if not label:
                     logger.warning(f"\n⚠️ Skipping '{iri}', label not found.")
                     continue
 
-            entities = []
-            processed_qids = set()
+                if qid in processed_qids:
+                    logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
+                    continue
 
-            geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
 
-            for g in geometry:
-                if g["vkt"]:
-                    feature_id = f"wd:{g['qid']}"
-                    geometry_obj = {
-                        "@id": f"{feature_id}-geom",
-                        "@type": "Geometry",
-                        "asWKT": f"SRID=4326;{g['vkt']}"
-                    }
-                    feature = {
-                        "@id": feature_id,
-                        "@type": "Feature",
-                        "label": g["label"],
-                        "description": g["description"],
-                        "qid": g["qid"],
-                        "wikidata": g["wikidata_url"],
-                        "osm_id": g["osm_id"],
-                        "hasGeometry": geometry_obj
-                    }
-                    features.append(feature)
+                if geometry:
+                    for g in geometry:
+                        if g["vkt"]:
+                            feature_id = f"wd:{g['qid']}"
+                            geometry_obj = {
+                                "@id": f"{feature_id}-geom",
+                                "@type": "Geometry",
+                                "asWKT": f"SRID=4326;{g['vkt']}"
+                            }
+                            feature = {
+                                "@id": feature_id,
+                                "@type": "Feature",
+                                "label": g["label"],
+                                "description": g["description"],
+                                "qid": g["qid"],
+                                "wikidata": g["wikidata_url"],
+                                "osm_id": g["osm_id"],
+                                "hasGeometry": geometry_obj
+                            }
+
+                            features.append(feature)
+                            processed_geonames_id.add(geonames_id)
+
+                        else:
+                            logger.warning(f"\n⚠️ Missing geometry for '{g['label']}', Wikidata URL: {g['wikidata_url']}. Skipping '{iri}'.")
+                            continue
                 else:
-                    logger.warning(f"\n⚠️ Missing geometry for {g}")
-
-            processed_geonames_id.add(iri)
+                    logger.warning(f"\n⚠️ Missing geometry for '{iri}'. Skipping...")
+                    continue
 
         geosparql_doc = {
             **GEOSPARQL_CONTEXT,
