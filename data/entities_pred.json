@@ -1,0 +1,1208 @@
+[
+  {
+    "row": 1,
+    "entities": []
+  },
+  {
+    "row": 2,
+    "entities": [
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q1524"
+      }
+    ]
+  },
+  {
+    "row": 3,
+    "entities": [
+      {
+        "text_label": "Grenelle",
+        "Wikidata_ID": "Q376896"
+      },
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      }
+    ]
+  },
+  {
+    "row": 4,
+    "entities": [
+      {
+        "text_label": "Valencia",
+        "Wikidata_ID": "Q8818"
+      }
+    ]
+  },
+  {
+    "row": 5,
+    "entities": []
+  },
+  {
+    "row": 6,
+    "entities": [
+      {
+        "text_label": "Cologne (Italia)",
+        "Wikidata_ID": "Q104064"
+      }
+    ]
+  },
+  {
+    "row": 7,
+    "entities": []
+  },
+  {
+    "row": 8,
+    "entities": []
+  },
+  {
+    "row": 9,
+    "entities": [
+      {
+        "text_label": "Jamhuri ya Watu wa China",
+        "Wikidata_ID": "Q148"
+      }
+    ]
+  },
+  {
+    "row": 10,
+    "entities": []
+  },
+  {
+    "row": 11,
+    "entities": []
+  },
+  {
+    "row": 12,
+    "entities": []
+  },
+  {
+    "row": 13,
+    "entities": []
+  },
+  {
+    "row": 14,
+    "entities": []
+  },
+  {
+    "row": 15,
+    "entities": []
+  },
+  {
+    "row": 16,
+    "entities": []
+  },
+  {
+    "row": 17,
+    "entities": []
+  },
+  {
+    "row": 18,
+    "entities": []
+  },
+  {
+    "row": 19,
+    "entities": []
+  },
+  {
+    "row": 20,
+    "entities": []
+  },
+  {
+    "row": 21,
+    "entities": []
+  },
+  {
+    "row": 22,
+    "entities": []
+  },
+  {
+    "row": 23,
+    "entities": []
+  },
+  {
+    "row": 24,
+    "entities": []
+  },
+  {
+    "row": 25,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Wupper",
+        "Wikidata_ID": "Q639374"
+      },
+      {
+        "text_label": "Berlin",
+        "Wikidata_ID": "Q64"
+      }
+    ]
+  },
+  {
+    "row": 26,
+    "entities": []
+  },
+  {
+    "row": 27,
+    "entities": []
+  },
+  {
+    "row": 28,
+    "entities": []
+  },
+  {
+    "row": 29,
+    "entities": []
+  },
+  {
+    "row": 30,
+    "entities": []
+  },
+  {
+    "row": 31,
+    "entities": []
+  },
+  {
+    "row": 32,
+    "entities": []
+  },
+  {
+    "row": 33,
+    "entities": []
+  },
+  {
+    "row": 34,
+    "entities": []
+  },
+  {
+    "row": 35,
+    "entities": []
+  },
+  {
+    "row": 36,
+    "entities": []
+  },
+  {
+    "row": 37,
+    "entities": []
+  },
+  {
+    "row": 38,
+    "entities": []
+  },
+  {
+    "row": 39,
+    "entities": []
+  },
+  {
+    "row": 40,
+    "entities": []
+  },
+  {
+    "row": 41,
+    "entities": []
+  },
+  {
+    "row": 42,
+    "entities": [
+      {
+        "text_label": "Ottoman Empire",
+        "Wikidata_ID": "Q12560"
+      }
+    ]
+  },
+  {
+    "row": 43,
+    "entities": [
+      {
+        "text_label": "Bulgaria",
+        "Wikidata_ID": "Q219"
+      },
+      {
+        "text_label": "Austria",
+        "Wikidata_ID": "Q40"
+      },
+      {
+        "text_label": "Serbia",
+        "Wikidata_ID": "Q403"
+      }
+    ]
+  },
+  {
+    "row": 44,
+    "entities": []
+  },
+  {
+    "row": 45,
+    "entities": []
+  },
+  {
+    "row": 46,
+    "entities": []
+  },
+  {
+    "row": 47,
+    "entities": []
+  },
+  {
+    "row": 48,
+    "entities": []
+  },
+  {
+    "row": 49,
+    "entities": []
+  },
+  {
+    "row": 50,
+    "entities": []
+  },
+  {
+    "row": 51,
+    "entities": []
+  },
+  {
+    "row": 52,
+    "entities": []
+  },
+  {
+    "row": 53,
+    "entities": []
+  },
+  {
+    "row": 54,
+    "entities": []
+  },
+  {
+    "row": 55,
+    "entities": []
+  },
+  {
+    "row": 56,
+    "entities": []
+  },
+  {
+    "row": 57,
+    "entities": []
+  },
+  {
+    "row": 58,
+    "entities": []
+  },
+  {
+    "row": 59,
+    "entities": []
+  },
+  {
+    "row": 60,
+    "entities": []
+  },
+  {
+    "row": 61,
+    "entities": []
+  },
+  {
+    "row": 62,
+    "entities": []
+  },
+  {
+    "row": 63,
+    "entities": [
+      {
+        "text_label": "Vannes",
+        "Wikidata_ID": "Q6593"
+      }
+    ]
+  },
+  {
+    "row": 64,
+    "entities": []
+  },
+  {
+    "row": 65,
+    "entities": []
+  },
+  {
+    "row": 66,
+    "entities": []
+  },
+  {
+    "row": 67,
+    "entities": []
+  },
+  {
+    "row": 68,
+    "entities": []
+  },
+  {
+    "row": 69,
+    "entities": []
+  },
+  {
+    "row": 70,
+    "entities": []
+  },
+  {
+    "row": 71,
+    "entities": []
+  },
+  {
+    "row": 72,
+    "entities": []
+  },
+  {
+    "row": 73,
+    "entities": []
+  },
+  {
+    "row": 74,
+    "entities": [
+      {
+        "text_label": "India",
+        "Wikidata_ID": "Q668"
+      },
+      {
+        "text_label": "Palestine (région)",
+        "Wikidata_ID": "Q23792"
+      }
+    ]
+  },
+  {
+    "row": 75,
+    "entities": []
+  },
+  {
+    "row": 76,
+    "entities": []
+  },
+  {
+    "row": 77,
+    "entities": [
+      {
+        "text_label": "North Carolina",
+        "Wikidata_ID": "Q1454"
+      },
+      {
+        "text_label": "Province of Carolina",
+        "Wikidata_ID": "Q1044394"
+      }
+    ]
+  },
+  {
+    "row": 78,
+    "entities": []
+  },
+  {
+    "row": 79,
+    "entities": []
+  },
+  {
+    "row": 80,
+    "entities": []
+  },
+  {
+    "row": 81,
+    "entities": []
+  },
+  {
+    "row": 82,
+    "entities": []
+  },
+  {
+    "row": 83,
+    "entities": []
+  },
+  {
+    "row": 84,
+    "entities": [
+      {
+        "text_label": "Lorraine",
+        "Wikidata_ID": "Q1137"
+      }
+    ]
+  },
+  {
+    "row": 85,
+    "entities": []
+  },
+  {
+    "row": 86,
+    "entities": []
+  },
+  {
+    "row": 87,
+    "entities": []
+  },
+  {
+    "row": 88,
+    "entities": []
+  },
+  {
+    "row": 89,
+    "entities": [
+      {
+        "text_label": "Nancy, France",
+        "Wikidata_ID": "Q40898"
+      }
+    ]
+  },
+  {
+    "row": 90,
+    "entities": []
+  },
+  {
+    "row": 91,
+    "entities": []
+  },
+  {
+    "row": 92,
+    "entities": []
+  },
+  {
+    "row": 93,
+    "entities": []
+  },
+  {
+    "row": 94,
+    "entities": []
+  },
+  {
+    "row": 95,
+    "entities": [
+      {
+        "text_label": "West Africa",
+        "Wikidata_ID": "Q4412"
+      }
+    ]
+  },
+  {
+    "row": 96,
+    "entities": []
+  },
+  {
+    "row": 97,
+    "entities": []
+  },
+  {
+    "row": 98,
+    "entities": []
+  },
+  {
+    "row": 99,
+    "entities": []
+  },
+  {
+    "row": 100,
+    "entities": []
+  },
+  {
+    "row": 101,
+    "entities": []
+  },
+  {
+    "row": 102,
+    "entities": []
+  },
+  {
+    "row": 103,
+    "entities": [
+      {
+        "text_label": "Middle East",
+        "Wikidata_ID": "Q7204"
+      }
+    ]
+  },
+  {
+    "row": 104,
+    "entities": []
+  },
+  {
+    "row": 105,
+    "entities": []
+  },
+  {
+    "row": 106,
+    "entities": []
+  },
+  {
+    "row": 107,
+    "entities": []
+  },
+  {
+    "row": 108,
+    "entities": []
+  },
+  {
+    "row": 109,
+    "entities": []
+  },
+  {
+    "row": 110,
+    "entities": []
+  },
+  {
+    "row": 111,
+    "entities": []
+  },
+  {
+    "row": 112,
+    "entities": []
+  },
+  {
+    "row": 113,
+    "entities": []
+  },
+  {
+    "row": 114,
+    "entities": []
+  },
+  {
+    "row": 115,
+    "entities": []
+  },
+  {
+    "row": 116,
+    "entities": []
+  },
+  {
+    "row": 117,
+    "entities": []
+  },
+  {
+    "row": 118,
+    "entities": []
+  },
+  {
+    "row": 119,
+    "entities": []
+  },
+  {
+    "row": 120,
+    "entities": []
+  },
+  {
+    "row": 121,
+    "entities": [
+      {
+        "text_label": "Lancashire",
+        "Wikidata_ID": "Q23077"
+      }
+    ]
+  },
+  {
+    "row": 122,
+    "entities": []
+  },
+  {
+    "row": 123,
+    "entities": []
+  },
+  {
+    "row": 124,
+    "entities": []
+  },
+  {
+    "row": 125,
+    "entities": []
+  },
+  {
+    "row": 126,
+    "entities": []
+  },
+  {
+    "row": 127,
+    "entities": [
+      {
+        "text_label": "Aubusson, Creuse",
+        "Wikidata_ID": "Q217161"
+      }
+    ]
+  },
+  {
+    "row": 128,
+    "entities": []
+  },
+  {
+    "row": 129,
+    "entities": []
+  },
+  {
+    "row": 130,
+    "entities": []
+  },
+  {
+    "row": 131,
+    "entities": [
+      {
+        "text_label": "Ingolstadt",
+        "Wikidata_ID": "Q3004"
+      }
+    ]
+  },
+  {
+    "row": 132,
+    "entities": [
+      {
+        "text_label": "Chicago",
+        "Wikidata_ID": "Q1297"
+      }
+    ]
+  },
+  {
+    "row": 133,
+    "entities": []
+  },
+  {
+    "row": 134,
+    "entities": [
+      {
+        "text_label": "Smethwick",
+        "Wikidata_ID": "Q1018565"
+      }
+    ]
+  },
+  {
+    "row": 135,
+    "entities": []
+  },
+  {
+    "row": 136,
+    "entities": []
+  },
+  {
+    "row": 137,
+    "entities": []
+  },
+  {
+    "row": 138,
+    "entities": []
+  },
+  {
+    "row": 139,
+    "entities": []
+  },
+  {
+    "row": 140,
+    "entities": []
+  },
+  {
+    "row": 141,
+    "entities": []
+  },
+  {
+    "row": 142,
+    "entities": []
+  },
+  {
+    "row": 143,
+    "entities": [
+      {
+        "text_label": "Bruges",
+        "Wikidata_ID": "Q327025"
+      }
+    ]
+  },
+  {
+    "row": 144,
+    "entities": []
+  },
+  {
+    "row": 145,
+    "entities": []
+  },
+  {
+    "row": 146,
+    "entities": []
+  },
+  {
+    "row": 147,
+    "entities": []
+  },
+  {
+    "row": 148,
+    "entities": []
+  },
+  {
+    "row": 149,
+    "entities": []
+  },
+  {
+    "row": 150,
+    "entities": []
+  },
+  {
+    "row": 151,
+    "entities": [
+      {
+        "text_label": "New York City",
+        "Wikidata_ID": "Q60"
+      },
+      {
+        "text_label": "New York (state)",
+        "Wikidata_ID": "Q1384"
+      },
+      {
+        "text_label": "York",
+        "Wikidata_ID": "Q42462"
+      }
+    ]
+  },
+  {
+    "row": 152,
+    "entities": []
+  },
+  {
+    "row": 153,
+    "entities": []
+  },
+  {
+    "row": 154,
+    "entities": []
+  },
+  {
+    "row": 155,
+    "entities": []
+  },
+  {
+    "row": 156,
+    "entities": []
+  },
+  {
+    "row": 157,
+    "entities": []
+  },
+  {
+    "row": 158,
+    "entities": []
+  },
+  {
+    "row": 159,
+    "entities": []
+  },
+  {
+    "row": 160,
+    "entities": []
+  },
+  {
+    "row": 161,
+    "entities": []
+  },
+  {
+    "row": 162,
+    "entities": [
+      {
+        "text_label": "Thessaly",
+        "Wikidata_ID": "Q22807284"
+      }
+    ]
+  },
+  {
+    "row": 163,
+    "entities": []
+  },
+  {
+    "row": 164,
+    "entities": []
+  },
+  {
+    "row": 165,
+    "entities": []
+  },
+  {
+    "row": 166,
+    "entities": []
+  },
+  {
+    "row": 167,
+    "entities": []
+  },
+  {
+    "row": 168,
+    "entities": []
+  },
+  {
+    "row": 169,
+    "entities": []
+  },
+  {
+    "row": 170,
+    "entities": []
+  },
+  {
+    "row": 171,
+    "entities": [
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      }
+    ]
+  },
+  {
+    "row": 172,
+    "entities": [
+      {
+        "text_label": "Prince George, British Columbia",
+        "Wikidata_ID": "Q590205"
+      }
+    ]
+  },
+  {
+    "row": 173,
+    "entities": []
+  },
+  {
+    "row": 174,
+    "entities": []
+  },
+  {
+    "row": 175,
+    "entities": []
+  },
+  {
+    "row": 176,
+    "entities": [
+      {
+        "text_label": "Belgrade (Namen)",
+        "Wikidata_ID": "Q647393"
+      }
+    ]
+  },
+  {
+    "row": 177,
+    "entities": []
+  },
+  {
+    "row": 178,
+    "entities": []
+  },
+  {
+    "row": 179,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Moscow",
+        "Wikidata_ID": "Q649"
+      }
+    ]
+  },
+  {
+    "row": 180,
+    "entities": []
+  },
+  {
+    "row": 181,
+    "entities": []
+  },
+  {
+    "row": 182,
+    "entities": []
+  },
+  {
+    "row": 183,
+    "entities": []
+  },
+  {
+    "row": 184,
+    "entities": [
+      {
+        "text_label": "The Crystal Palace",
+        "Wikidata_ID": "Q202902"
+      }
+    ]
+  },
+  {
+    "row": 185,
+    "entities": []
+  },
+  {
+    "row": 186,
+    "entities": []
+  },
+  {
+    "row": 187,
+    "entities": []
+  },
+  {
+    "row": 188,
+    "entities": []
+  },
+  {
+    "row": 189,
+    "entities": []
+  },
+  {
+    "row": 190,
+    "entities": []
+  },
+  {
+    "row": 191,
+    "entities": []
+  },
+  {
+    "row": 192,
+    "entities": []
+  },
+  {
+    "row": 193,
+    "entities": []
+  },
+  {
+    "row": 194,
+    "entities": []
+  },
+  {
+    "row": 195,
+    "entities": [
+      {
+        "text_label": "Kiruna",
+        "Wikidata_ID": "Q83232"
+      },
+      {
+        "text_label": "Genua",
+        "Wikidata_ID": "Q1449"
+      },
+      {
+        "text_label": "Genoa (Wisconsin)",
+        "Wikidata_ID": "Q2644375"
+      }
+    ]
+  },
+  {
+    "row": 196,
+    "entities": []
+  },
+  {
+    "row": 197,
+    "entities": []
+  },
+  {
+    "row": 198,
+    "entities": []
+  },
+  {
+    "row": 199,
+    "entities": [
+      {
+        "text_label": "Metsovo",
+        "Wikidata_ID": "Q985630"
+      }
+    ]
+  },
+  {
+    "row": 200,
+    "entities": []
+  },
+  {
+    "row": 201,
+    "entities": []
+  },
+  {
+    "row": 202,
+    "entities": []
+  },
+  {
+    "row": 203,
+    "entities": []
+  },
+  {
+    "row": 204,
+    "entities": []
+  },
+  {
+    "row": 205,
+    "entities": []
+  },
+  {
+    "row": 206,
+    "entities": []
+  },
+  {
+    "row": 207,
+    "entities": []
+  },
+  {
+    "row": 208,
+    "entities": []
+  },
+  {
+    "row": 209,
+    "entities": []
+  },
+  {
+    "row": 210,
+    "entities": []
+  },
+  {
+    "row": 211,
+    "entities": [
+      {
+        "text_label": "Syria",
+        "Wikidata_ID": "Q858"
+      },
+      {
+        "text_label": "North Africa",
+        "Wikidata_ID": "Q27381"
+      }
+    ]
+  },
+  {
+    "row": 212,
+    "entities": []
+  },
+  {
+    "row": 213,
+    "entities": []
+  },
+  {
+    "row": 214,
+    "entities": []
+  },
+  {
+    "row": 215,
+    "entities": []
+  },
+  {
+    "row": 216,
+    "entities": [
+      {
+        "text_label": "Istanbul",
+        "Wikidata_ID": "Q406"
+      }
+    ]
+  },
+  {
+    "row": 217,
+    "entities": []
+  },
+  {
+    "row": 218,
+    "entities": []
+  },
+  {
+    "row": 219,
+    "entities": []
+  },
+  {
+    "row": 220,
+    "entities": []
+  },
+  {
+    "row": 221,
+    "entities": []
+  },
+  {
+    "row": 222,
+    "entities": []
+  },
+  {
+    "row": 223,
+    "entities": []
+  },
+  {
+    "row": 224,
+    "entities": []
+  },
+  {
+    "row": 225,
+    "entities": []
+  },
+  {
+    "row": 226,
+    "entities": []
+  },
+  {
+    "row": 227,
+    "entities": []
+  },
+  {
+    "row": 228,
+    "entities": []
+  },
+  {
+    "row": 229,
+    "entities": []
+  },
+  {
+    "row": 230,
+    "entities": []
+  },
+  {
+    "row": 231,
+    "entities": []
+  },
+  {
+    "row": 232,
+    "entities": []
+  },
+  {
+    "row": 233,
+    "entities": []
+  },
+  {
+    "row": 234,
+    "entities": []
+  },
+  {
+    "row": 235,
+    "entities": [
+      {
+        "text_label": "Rochdale",
+        "Wikidata_ID": "Q474605"
+      }
+    ]
+  },
+  {
+    "row": 236,
+    "entities": []
+  },
+  {
+    "row": 237,
+    "entities": []
+  },
+  {
+    "row": 238,
+    "entities": []
+  },
+  {
+    "row": 239,
+    "entities": []
+  },
+  {
+    "row": 240,
+    "entities": [
+      {
+        "text_label": "Saint-Quirin",
+        "Wikidata_ID": "Q21977"
+      },
+      {
+        "text_label": "Saint-Louis (Missouri)",
+        "Wikidata_ID": "Q38022"
+      }
+    ]
+  },
+  {
+    "row": 241,
+    "entities": []
+  },
+  {
+    "row": 242,
+    "entities": []
+  },
+  {
+    "row": 243,
+    "entities": []
+  },
+  {
+    "row": 244,
+    "entities": []
+  },
+  {
+    "row": 245,
+    "entities": []
+  }
+]
