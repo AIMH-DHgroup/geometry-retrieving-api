@@ -49,10 +49,15 @@ def load_json_files(folder_path, filename):
 def count_entities(data):
     """Count the number of entities in the dataset"""
     count = 0
+    count_duplicates = 0
     for i in range(len(data)):
+        processed_ids = set()
         for j in range(len(data[i]['entities'])):
             count += 1
-    return count
+            if data[i]['entities'][j]['Wikidata_ID'] in processed_ids:
+                count_duplicates += 1
+            processed_ids.add(data[i]['entities'][j]['Wikidata_ID'])
+    return count, count_duplicates
 
 def calculate_metrics(gold_data, predicted_data, all_dataset):
     """
@@ -64,9 +69,10 @@ def calculate_metrics(gold_data, predicted_data, all_dataset):
     entity_false_negative = 0
 
     # Calculate total entities
-    gold_count = count_entities(gold_data)
-    predicted_count = count_entities(predicted_data)
-    print(f"\nNumber of total entities: {gold_count, predicted_count}")
+    (gold_count, gold_duplicates_count) = count_entities(gold_data)
+    (predicted_count, predicted_duplicates_count) = count_entities(predicted_data)
+    print(f"\nNumber of total entities: {gold_count} (gold standard), {predicted_count} (predicted)")
+    print(f"Number of total duplicated entities: {gold_duplicates_count} (gold standard), {predicted_duplicates_count} (predicted)")
 
     total_processed_ids = 0
 
@@ -117,8 +123,8 @@ def calculate_metrics(gold_data, predicted_data, all_dataset):
                 total_processed_ids += len(processed_ids)
                 continue
 
-            gold_values = list(gold_entities[0].values())
-            predicted_values = list(predicted_entities[0].values())
+            gold_values = [e['Wikidata_ID'] for e in gold_entities if 'Wikidata_ID' in e]
+            predicted_values = [e['Wikidata_ID'] for e in predicted_entities if 'Wikidata_ID' in e]
 
             for gold in gold_entities:
                 gold_id = gold.get('Wikidata_ID')
@@ -137,6 +143,8 @@ def calculate_metrics(gold_data, predicted_data, all_dataset):
                         if count_gold_id == count_predicted_id:
                             entity_true_positive += 1
                         else:
+
+                            entity_true_positive += count_predicted_id
                             diff = count_gold_id - count_predicted_id
 
                             if diff > 0:
@@ -200,7 +208,7 @@ def calculate_metrics(gold_data, predicted_data, all_dataset):
     entity_recall = entity_true_positive / (entity_true_positive + entity_false_negative) if (entity_true_positive + entity_false_negative) > 0 else 0
     entity_f1_score = (2 * entity_precision * entity_recall) / (entity_precision + entity_recall) if (entity_precision + entity_recall) > 0 else 0
 
-    print(f"Total processed ids: {total_processed_ids}")
+    print(f"Total unique processed IDs: {total_processed_ids}")
 
     return entity_precision, entity_recall, entity_f1_score, entity_true_positive, entity_false_positive, entity_false_negative
 
