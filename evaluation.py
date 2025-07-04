@@ -168,6 +168,7 @@ def calculate_metrics(gold_data, predicted_data, all_dataset):
 
                     if predicted_id not in gold_values:
                         entity_false_positive += count_predicted_id
+                        entity_false_negative -= count_predicted_id
 
                     processed_ids.add(predicted_id)
 
