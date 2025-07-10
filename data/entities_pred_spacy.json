@@ -1,12 +1,7 @@
 [
   {
     "row": 1,
-    "entities": [
-      {
-        "text_label": "Vannes-le-Châtel",
-        "Wikidata_ID": "Q920268"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 2,
@@ -18,16 +13,16 @@
       {
         "text_label": "Athens",
         "Wikidata_ID": "Q203263"
-      },
-      {
-        "text_label": "Tinian",
-        "Wikidata_ID": "Q325652"
       }
     ]
   },
   {
     "row": 3,
     "entities": [
+      {
+        "text_label": "Grenelle",
+        "Wikidata_ID": "Q376896"
+      },
       {
         "text_label": "Paris",
         "Wikidata_ID": "Q90"
@@ -46,12 +41,16 @@
         "Wikidata_ID": "Q8818"
       },
       {
-        "text_label": "Valencia",
-        "Wikidata_ID": "Q8818"
-      },
-      {
         "text_label": "Yecla",
         "Wikidata_ID": "Q931116"
+      },
+      {
+        "text_label": "Virginia Museum of Fine Arts",
+        "Wikidata_ID": "Q4013975"
+      },
+      {
+        "text_label": "Madonna of Chancellor Rolin",
+        "Wikidata_ID": "Q1516449"
       }
     ]
   },
@@ -74,12 +73,7 @@
   },
   {
     "row": 8,
-    "entities": [
-      {
-        "text_label": "Balkans",
-        "Wikidata_ID": "Q23522"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 9,
@@ -96,12 +90,7 @@
   },
   {
     "row": 10,
-    "entities": [
-      {
-        "text_label": "Region of Murcia",
-        "Wikidata_ID": "Q5772"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 11,
@@ -198,10 +187,6 @@
         "Wikidata_ID": "Q365"
       },
       {
-        "text_label": "Krefeld",
-        "Wikidata_ID": "Q2805"
-      },
-      {
         "text_label": "Netherlands",
         "Wikidata_ID": "Q55"
       },
@@ -233,12 +218,7 @@
   },
   {
     "row": 27,
-    "entities": [
-      {
-        "text_label": "Heraklion",
-        "Wikidata_ID": "Q160544"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 28,
@@ -247,18 +227,6 @@
   {
     "row": 29,
     "entities": [
-      {
-        "text_label": "Constantinople",
-        "Wikidata_ID": "Q16869"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
       {
         "text_label": "Crete",
         "Wikidata_ID": "Q958049"
@@ -288,43 +256,18 @@
         "Wikidata_ID": "Q1021629"
       },
       {
-        "text_label": "Kastelli",
-        "Wikidata_ID": "Q845105"
-      },
-      {
-        "text_label": "Kallérgos",
-        "Wikidata_ID": "Q21747298"
-      },
-      {
         "text_label": "Rethymno",
         "Wikidata_ID": "Q200908"
       },
       {
-        "text_label": "House of Kallergis",
-        "Wikidata_ID": "Q111155162"
-      },
-      {
-        "text_label": "White Mountains",
-        "Wikidata_ID": "Q1556007"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
+        "text_label": "Kallergiana, Chania",
+        "Wikidata_ID": "Q21772704"
       }
     ]
   },
   {
     "row": 30,
-    "entities": [
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 31,
@@ -332,10 +275,6 @@
       {
         "text_label": "Berlin",
         "Wikidata_ID": "Q64"
-      },
-      {
-        "text_label": "Düsseldorf",
-        "Wikidata_ID": "Q1718"
       }
     ]
   },
@@ -386,6 +325,10 @@
       {
         "text_label": "Paris",
         "Wikidata_ID": "Q90"
+      },
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
       }
     ]
   },
@@ -402,16 +345,8 @@
     "row": 42,
     "entities": [
       {
-        "text_label": "Ottoman Empire",
-        "Wikidata_ID": "Q12560"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
-      {
-        "text_label": "Halepa",
-        "Wikidata_ID": "Q25164279"
+        "text_label": "coat of arms of the Ottoman Empire",
+        "Wikidata_ID": "Q817316"
       },
       {
         "text_label": "Chania",
@@ -423,16 +358,8 @@
     "row": 43,
     "entities": [
       {
-        "text_label": "Balkans",
-        "Wikidata_ID": "Q23522"
-      },
-      {
-        "text_label": "Balkans",
-        "Wikidata_ID": "Q23522"
-      },
-      {
-        "text_label": "Ottoman Empire",
-        "Wikidata_ID": "Q12560"
+        "text_label": "coat of arms of the Ottoman Empire",
+        "Wikidata_ID": "Q817316"
       },
       {
         "text_label": "Bulgaria",
@@ -443,16 +370,20 @@
         "Wikidata_ID": "Q218"
       },
       {
-        "text_label": "Ottoman Empire",
-        "Wikidata_ID": "Q12560"
+        "text_label": "coat of arms of the Ottoman Empire",
+        "Wikidata_ID": "Q817316"
       },
       {
         "text_label": "Europe",
         "Wikidata_ID": "Q46"
       },
       {
-        "text_label": "Austria-Hungary",
-        "Wikidata_ID": "Q28513"
+        "text_label": "Austria",
+        "Wikidata_ID": "Q40"
+      },
+      {
+        "text_label": "Hungary",
+        "Wikidata_ID": "Q28"
       },
       {
         "text_label": "Serbia",
@@ -477,28 +408,8 @@
     "row": 46,
     "entities": [
       {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
-      {
-        "text_label": "Heraklion",
-        "Wikidata_ID": "Q160544"
-      },
-      {
-        "text_label": "Rethymno",
-        "Wikidata_ID": "Q200908"
-      },
-      {
-        "text_label": "Heraklion",
-        "Wikidata_ID": "Q160544"
-      },
-      {
-        "text_label": "Lasithi Regional Unit",
-        "Wikidata_ID": "Q210450"
-      },
-      {
-        "text_label": "Sitia",
-        "Wikidata_ID": "Q985549"
+        "text_label": "Anogia",
+        "Wikidata_ID": "Q3554576"
       },
       {
         "text_label": "Sfakia Municipality",
@@ -512,21 +423,12 @@
       {
         "text_label": "Kronprinzenstraße",
         "Wikidata_ID": "Q15695583"
-      },
-      {
-        "text_label": "Krefeld",
-        "Wikidata_ID": "Q2805"
       }
     ]
   },
   {
     "row": 48,
-    "entities": [
-      {
-        "text_label": "Region of Murcia",
-        "Wikidata_ID": "Q5772"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 49,
@@ -551,10 +453,6 @@
       {
         "text_label": "France",
         "Wikidata_ID": "Q142"
-      },
-      {
-        "text_label": "Limoges",
-        "Wikidata_ID": "Q45656"
       }
     ]
   },
@@ -582,8 +480,8 @@
     "row": 57,
     "entities": [
       {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
+        "text_label": "Maona",
+        "Wikidata_ID": "Q14582264"
       }
     ]
   },
@@ -593,12 +491,7 @@
   },
   {
     "row": 59,
-    "entities": [
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 60,
@@ -620,10 +513,6 @@
   {
     "row": 63,
     "entities": [
-      {
-        "text_label": "Vannes-le-Châtel",
-        "Wikidata_ID": "Q920268"
-      },
       {
         "text_label": "Vannes",
         "Wikidata_ID": "Q6593"
@@ -679,18 +568,19 @@
         "Wikidata_ID": "Q203263"
       },
       {
-        "text_label": "Koumoundourou islet",
-        "Wikidata_ID": "Q12881712"
-      },
-      {
-        "text_label": "Ottoman Empire",
-        "Wikidata_ID": "Q12560"
+        "text_label": "coat of arms of the Ottoman Empire",
+        "Wikidata_ID": "Q817316"
       }
     ]
   },
   {
     "row": 72,
-    "entities": []
+    "entities": [
+      {
+        "text_label": "Spain",
+        "Wikidata_ID": "Q29"
+      }
+    ]
   },
   {
     "row": 73,
@@ -704,10 +594,6 @@
         "Wikidata_ID": "Q160544"
       },
       {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
-      {
         "text_label": "India",
         "Wikidata_ID": "Q668"
       },
@@ -718,21 +604,12 @@
       {
         "text_label": "Palestine",
         "Wikidata_ID": "Q617602"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
       }
     ]
   },
   {
     "row": 75,
-    "entities": [
-      {
-        "text_label": "Murcia",
-        "Wikidata_ID": "Q195459"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 76,
@@ -741,10 +618,6 @@
   {
     "row": 77,
     "entities": [
-      {
-        "text_label": "North Carolina",
-        "Wikidata_ID": "Q1454"
-      },
       {
         "text_label": "Krefeld",
         "Wikidata_ID": "Q2805"
@@ -808,21 +681,11 @@
   },
   {
     "row": 86,
-    "entities": [
-      {
-        "text_label": "Amern",
-        "Wikidata_ID": "Q470160"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 87,
-    "entities": [
-      {
-        "text_label": "Düsseldorf",
-        "Wikidata_ID": "Q1718"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 88,
@@ -832,20 +695,12 @@
     "row": 89,
     "entities": [
       {
-        "text_label": "Daum",
-        "Wikidata_ID": "Q3017025"
-      },
-      {
-        "text_label": "Majorelle Garden",
-        "Wikidata_ID": "Q1395431"
-      },
-      {
         "text_label": "Nancy",
         "Wikidata_ID": "Q40898"
       },
       {
-        "text_label": "Vannes-le-Châtel",
-        "Wikidata_ID": "Q920268"
+        "text_label": "Vannes",
+        "Wikidata_ID": "Q6593"
       }
     ]
   },
@@ -853,12 +708,12 @@
     "row": 90,
     "entities": [
       {
-        "text_label": "Genoa",
-        "Wikidata_ID": "Q1449"
+        "text_label": "Maona",
+        "Wikidata_ID": "Q14582264"
       },
       {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
+        "text_label": "Phocaea",
+        "Wikidata_ID": "Q428732"
       }
     ]
   },
@@ -882,10 +737,6 @@
   {
     "row": 93,
     "entities": [
-      {
-        "text_label": "Aubusson",
-        "Wikidata_ID": "Q217161"
-      },
       {
         "text_label": "Limoges",
         "Wikidata_ID": "Q45656"
@@ -949,10 +800,6 @@
       {
         "text_label": "Krefeld",
         "Wikidata_ID": "Q2805"
-      },
-      {
-        "text_label": "Mönchengladbach",
-        "Wikidata_ID": "Q2758"
       }
     ]
   },
@@ -964,14 +811,6 @@
     "row": 100,
     "entities": [
       {
-        "text_label": "Epirus",
-        "Wikidata_ID": "Q565751"
-      },
-      {
-        "text_label": "Epirus",
-        "Wikidata_ID": "Q565751"
-      },
-      {
         "text_label": "Europe",
         "Wikidata_ID": "Q46"
       }
@@ -979,12 +818,7 @@
   },
   {
     "row": 101,
-    "entities": [
-      {
-        "text_label": "Niagara Falls",
-        "Wikidata_ID": "Q34221"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 102,
@@ -998,12 +832,8 @@
         "Wikidata_ID": "Q796"
       },
       {
-        "text_label": "Middle East",
-        "Wikidata_ID": "Q7204"
-      },
-      {
-        "text_label": "Arak",
-        "Wikidata_ID": "Q212628"
+        "text_label": "The Middle East",
+        "Wikidata_ID": "Q7751278"
       }
     ]
   },
@@ -1058,8 +888,12 @@
     "row": 111,
     "entities": [
       {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
+        "text_label": "Cretan",
+        "Wikidata_ID": "Q103778898"
+      },
+      {
+        "text_label": "Cretan",
+        "Wikidata_ID": "Q103778898"
       }
     ]
   },
@@ -1085,12 +919,7 @@
   },
   {
     "row": 117,
-    "entities": [
-      {
-        "text_label": "Mariannenstraße",
-        "Wikidata_ID": "Q105398372"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 118,
@@ -1099,6 +928,14 @@
   {
     "row": 119,
     "entities": [
+      {
+        "text_label": "archpriesthood",
+        "Wikidata_ID": "Q30749622"
+      },
+      {
+        "text_label": "Yecla",
+        "Wikidata_ID": "Q931116"
+      },
       {
         "text_label": "Yecla",
         "Wikidata_ID": "Q931116"
@@ -1124,12 +961,7 @@
   },
   {
     "row": 123,
-    "entities": [
-      {
-        "text_label": "Troezen",
-        "Wikidata_ID": "Q581494"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 124,
@@ -1170,24 +1002,12 @@
     "row": 129,
     "entities": [
       {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      },
-      {
         "text_label": "Oman",
         "Wikidata_ID": "Q842"
       },
       {
         "text_label": "Greece",
         "Wikidata_ID": "Q41"
-      },
-      {
-        "text_label": "Heraklion",
-        "Wikidata_ID": "Q160544"
-      },
-      {
-        "text_label": "Rethymno",
-        "Wikidata_ID": "Q200908"
       },
       {
         "text_label": "Chania",
@@ -1220,24 +1040,12 @@
         "Wikidata_ID": "Q980"
       },
       {
-        "text_label": "Lech",
-        "Wikidata_ID": "Q567731"
-      },
-      {
-        "text_label": "Rain",
-        "Wikidata_ID": "Q503737"
-      },
-      {
         "text_label": "Ingolstadt",
         "Wikidata_ID": "Q3004"
       },
       {
         "text_label": "Altötting",
         "Wikidata_ID": "Q256669"
-      },
-      {
-        "text_label": "Upper Bavaria",
-        "Wikidata_ID": "Q10562"
       }
     ]
   },
@@ -1266,12 +1074,8 @@
     "row": 134,
     "entities": [
       {
-        "text_label": "Bontemps African American Museum",
-        "Wikidata_ID": "Q4942613"
-      },
-      {
-        "text_label": "Choisy-le-Roi",
-        "Wikidata_ID": "Q212987"
+        "text_label": "Choisy",
+        "Wikidata_ID": "Q301469"
       },
       {
         "text_label": "Paris",
@@ -1299,20 +1103,12 @@
     "row": 138,
     "entities": [
       {
-        "text_label": "Constantinople",
-        "Wikidata_ID": "Q16869"
+        "text_label": "Cretan",
+        "Wikidata_ID": "Q103778898"
       },
       {
-        "text_label": "Peloponnese",
-        "Wikidata_ID": "Q78967"
-      },
-      {
-        "text_label": "Cyprus",
-        "Wikidata_ID": "Q229"
-      },
-      {
-        "text_label": "Anatolia",
-        "Wikidata_ID": "Q51614"
+        "text_label": "Cretan",
+        "Wikidata_ID": "Q103778898"
       }
     ]
   },
@@ -1324,10 +1120,6 @@
     "row": 140,
     "entities": [
       {
-        "text_label": "Ancient Greece",
-        "Wikidata_ID": "Q11772"
-      },
-      {
         "text_label": "New England",
         "Wikidata_ID": "Q18389"
       }
@@ -1335,12 +1127,7 @@
   },
   {
     "row": 141,
-    "entities": [
-      {
-        "text_label": "Vannes-le-Châtel",
-        "Wikidata_ID": "Q920268"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 142,
@@ -1382,16 +1169,7 @@
   },
   {
     "row": 148,
-    "entities": [
-      {
-        "text_label": "Kenworthy Road",
-        "Wikidata_ID": "Q101796982"
-      },
-      {
-        "text_label": "Bullough's Pond",
-        "Wikidata_ID": "Q4997011"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 149,
@@ -1413,6 +1191,14 @@
         "Wikidata_ID": "Q217161"
       },
       {
+        "text_label": "Herbinghen",
+        "Wikidata_ID": "Q988044"
+      },
+      {
+        "text_label": "Magnelli",
+        "Wikidata_ID": "Q18444858"
+      },
+      {
         "text_label": "Paris",
         "Wikidata_ID": "Q90"
       },
@@ -1429,10 +1215,6 @@
   {
     "row": 153,
     "entities": [
-      {
-        "text_label": "Alexandreia",
-        "Wikidata_ID": "Q1014285"
-      },
       {
         "text_label": "Egypt",
         "Wikidata_ID": "Q79"
@@ -1453,10 +1235,6 @@
       {
         "text_label": "Greece",
         "Wikidata_ID": "Q41"
-      },
-      {
-        "text_label": "Balkans",
-        "Wikidata_ID": "Q23522"
       }
     ]
   },
@@ -1466,12 +1244,7 @@
   },
   {
     "row": 157,
-    "entities": [
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 158,
@@ -1479,6 +1252,10 @@
       {
         "text_label": "Germany",
         "Wikidata_ID": "Q183"
+      },
+      {
+        "text_label": "The University of Texas MD Anderson Cancer Center",
+        "Wikidata_ID": "Q1525831"
       }
     ]
   },
@@ -1497,27 +1274,14 @@
   },
   {
     "row": 161,
-    "entities": [
-      {
-        "text_label": "Spon Lane railway station",
-        "Wikidata_ID": "Q7578941"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 162,
     "entities": [
       {
-        "text_label": "Epirus",
-        "Wikidata_ID": "Q565751"
-      },
-      {
         "text_label": "Thessaly",
         "Wikidata_ID": "Q166919"
-      },
-      {
-        "text_label": "Ionian Islands",
-        "Wikidata_ID": "Q170295"
       },
       {
         "text_label": "Italy",
@@ -1526,30 +1290,16 @@
       {
         "text_label": "Rome",
         "Wikidata_ID": "Q220"
-      },
-      {
-        "text_label": "Bulgaria",
-        "Wikidata_ID": "Q219"
       }
     ]
   },
   {
     "row": 163,
-    "entities": [
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 164,
-    "entities": [
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 165,
@@ -1559,28 +1309,8 @@
         "Wikidata_ID": "Q1137"
       },
       {
-        "text_label": "Lorraine",
-        "Wikidata_ID": "Q1137"
-      },
-      {
-        "text_label": "Meisenthal",
-        "Wikidata_ID": "Q22915"
-      },
-      {
-        "text_label": "Portieux",
-        "Wikidata_ID": "Q836332"
-      },
-      {
-        "text_label": "Vallérysthal",
-        "Wikidata_ID": "Q3002821"
-      },
-      {
         "text_label": "Saint-Quirin",
         "Wikidata_ID": "Q21977"
-      },
-      {
-        "text_label": "Baccarat",
-        "Wikidata_ID": "Q319282"
       },
       {
         "text_label": "Saint-Louis",
@@ -1609,22 +1339,14 @@
     "row": 169,
     "entities": [
       {
-        "text_label": "Aubusson",
-        "Wikidata_ID": "Q217161"
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
       }
     ]
   },
   {
     "row": 170,
     "entities": [
-      {
-        "text_label": "United Arab Emirates",
-        "Wikidata_ID": "Q878"
-      },
-      {
-        "text_label": "Aydın Province",
-        "Wikidata_ID": "Q79846"
-      },
       {
         "text_label": "İzmir",
         "Wikidata_ID": "Q35997"
@@ -1634,10 +1356,6 @@
   {
     "row": 171,
     "entities": [
-      {
-        "text_label": "Aachen",
-        "Wikidata_ID": "Q1017"
-      },
       {
         "text_label": "Aachen",
         "Wikidata_ID": "Q1017"
@@ -1653,6 +1371,10 @@
       {
         "text_label": "Netherlands",
         "Wikidata_ID": "Q55"
+      },
+      {
+        "text_label": "Charlemagne",
+        "Wikidata_ID": "Q142017"
       }
     ]
   },
@@ -1660,23 +1382,18 @@
     "row": 172,
     "entities": [
       {
-        "text_label": "Cretan State",
-        "Wikidata_ID": "Q72785"
-      },
-      {
         "text_label": "Greece",
         "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Prince George",
+        "Wikidata_ID": "Q590205"
       }
     ]
   },
   {
     "row": 173,
-    "entities": [
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 174,
@@ -1684,14 +1401,6 @@
       {
         "text_label": "Aachen",
         "Wikidata_ID": "Q1017"
-      },
-      {
-        "text_label": "Aachen",
-        "Wikidata_ID": "Q1017"
-      },
-      {
-        "text_label": "Campo Santo Teutonico",
-        "Wikidata_ID": "Q27333"
       },
       {
         "text_label": "Rome",
@@ -1703,8 +1412,8 @@
     "row": 175,
     "entities": [
       {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
+        "text_label": "Maona",
+        "Wikidata_ID": "Q14582264"
       }
     ]
   },
@@ -1714,10 +1423,6 @@
       {
         "text_label": "Ioannina",
         "Wikidata_ID": "Q183199"
-      },
-      {
-        "text_label": "Byzantine Empire",
-        "Wikidata_ID": "Q12544"
       },
       {
         "text_label": "Belgrade",
@@ -1752,10 +1457,6 @@
         "Wikidata_ID": "Q773853"
       },
       {
-        "text_label": "Constantinople",
-        "Wikidata_ID": "Q16869"
-      },
-      {
         "text_label": "Ioannina",
         "Wikidata_ID": "Q183199"
       }
@@ -1765,19 +1466,14 @@
     "row": 177,
     "entities": [
       {
-        "text_label": "Carolingian Empire",
-        "Wikidata_ID": "Q31929"
+        "text_label": "Denmark",
+        "Wikidata_ID": "Q35"
       }
     ]
   },
   {
     "row": 178,
-    "entities": [
-      {
-        "text_label": "Rhodes",
-        "Wikidata_ID": "Q22254"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 179,
@@ -1787,20 +1483,8 @@
         "Wikidata_ID": "Q183199"
       },
       {
-        "text_label": "Ioannina",
-        "Wikidata_ID": "Q183199"
-      },
-      {
-        "text_label": "Moscow Oblast",
-        "Wikidata_ID": "Q1697"
-      },
-      {
         "text_label": "Nampa",
         "Wikidata_ID": "Q622633"
-      },
-      {
-        "text_label": "Ioannina",
-        "Wikidata_ID": "Q183199"
       }
     ]
   },
@@ -1816,20 +1500,12 @@
     "row": 182,
     "entities": [
       {
-        "text_label": "Charlemagne",
-        "Wikidata_ID": "Q142017"
-      },
-      {
         "text_label": "Aachen",
         "Wikidata_ID": "Q1017"
       },
       {
         "text_label": "Europe",
         "Wikidata_ID": "Q46"
-      },
-      {
-        "text_label": "Aachen",
-        "Wikidata_ID": "Q1017"
       },
       {
         "text_label": "Baghdad",
@@ -1840,12 +1516,12 @@
         "Wikidata_ID": "Q617602"
       },
       {
-        "text_label": "Spain",
-        "Wikidata_ID": "Q29"
+        "text_label": "Byzantine Empire",
+        "Wikidata_ID": "Q12544"
       },
       {
-        "text_label": "Aachen",
-        "Wikidata_ID": "Q1017"
+        "text_label": "Spain",
+        "Wikidata_ID": "Q29"
       }
     ]
   },
@@ -1871,6 +1547,10 @@
       {
         "text_label": "Apokoronas Municipality",
         "Wikidata_ID": "Q2712158"
+      },
+      {
+        "text_label": "Oman",
+        "Wikidata_ID": "Q842"
       }
     ]
   },
@@ -1882,19 +1562,14 @@
         "Wikidata_ID": "Q145"
       },
       {
-        "text_label": "Crystal Palace railway station",
-        "Wikidata_ID": "Q676281"
+        "text_label": "The Crystal Palace",
+        "Wikidata_ID": "Q202902"
       }
     ]
   },
   {
     "row": 185,
-    "entities": [
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 186,
@@ -1935,10 +1610,6 @@
       {
         "text_label": "Ioannina",
         "Wikidata_ID": "Q183199"
-      },
-      {
-        "text_label": "Acronauplia",
-        "Wikidata_ID": "Q3555617"
       }
     ]
   },
@@ -1949,10 +1620,6 @@
   {
     "row": 193,
     "entities": [
-      {
-        "text_label": "Russian Empire",
-        "Wikidata_ID": "Q34266"
-      },
       {
         "text_label": "Mastichochoria Municipal Unit",
         "Wikidata_ID": "Q2639307"
@@ -1999,10 +1666,6 @@
         "Wikidata_ID": "Q1449"
       },
       {
-        "text_label": "Vercelli",
-        "Wikidata_ID": "Q5990"
-      },
-      {
         "text_label": "Alps",
         "Wikidata_ID": "Q1286"
       },
@@ -2033,18 +1696,6 @@
     "row": 199,
     "entities": [
       {
-        "text_label": "Ioannina",
-        "Wikidata_ID": "Q183199"
-      },
-      {
-        "text_label": "Epirus",
-        "Wikidata_ID": "Q565751"
-      },
-      {
-        "text_label": "Athamanika",
-        "Wikidata_ID": "Q754695"
-      },
-      {
         "text_label": "Konitsa",
         "Wikidata_ID": "Q1014221"
       },
@@ -2061,16 +1712,8 @@
         "Wikidata_ID": "Q208573"
       },
       {
-        "text_label": "Kalarrytes",
-        "Wikidata_ID": "Q3564423"
-      },
-      {
         "text_label": "Ioannina",
         "Wikidata_ID": "Q183199"
-      },
-      {
-        "text_label": "Bulgaria",
-        "Wikidata_ID": "Q219"
       },
       {
         "text_label": "Italy",
@@ -2094,8 +1737,8 @@
     "row": 203,
     "entities": [
       {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
+        "text_label": "Maona",
+        "Wikidata_ID": "Q14582264"
       }
     ]
   },
@@ -2103,8 +1746,12 @@
     "row": 204,
     "entities": [
       {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
+        "text_label": "Cretan",
+        "Wikidata_ID": "Q103778898"
+      },
+      {
+        "text_label": "Cretan",
+        "Wikidata_ID": "Q103778898"
       },
       {
         "text_label": "Greece",
@@ -2116,16 +1763,8 @@
     "row": 205,
     "entities": [
       {
-        "text_label": "Genoa",
-        "Wikidata_ID": "Q1449"
-      },
-      {
         "text_label": "Anatolia",
         "Wikidata_ID": "Q51614"
-      },
-      {
-        "text_label": "Chios",
-        "Wikidata_ID": "Q160483"
       }
     ]
   },
@@ -2133,16 +1772,12 @@
     "row": 206,
     "entities": [
       {
-        "text_label": "Nazi Germany",
-        "Wikidata_ID": "Q7318"
+        "text_label": "Germany",
+        "Wikidata_ID": "Q183"
       },
       {
         "text_label": "Greece",
         "Wikidata_ID": "Q41"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
       },
       {
         "text_label": "Greece",
@@ -2156,16 +1791,16 @@
   },
   {
     "row": 208,
-    "entities": []
+    "entities": [
+      {
+        "text_label": "Yecla",
+        "Wikidata_ID": "Q931116"
+      }
+    ]
   },
   {
     "row": 209,
-    "entities": [
-      {
-        "text_label": "Murcia",
-        "Wikidata_ID": "Q195459"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 210,
@@ -2175,8 +1810,8 @@
     "row": 211,
     "entities": [
       {
-        "text_label": "Asia",
-        "Wikidata_ID": "Q48"
+        "text_label": "Anatolia",
+        "Wikidata_ID": "Q51614"
       },
       {
         "text_label": "Europe",
@@ -2254,16 +1889,7 @@
   },
   {
     "row": 212,
-    "entities": [
-      {
-        "text_label": "Nassau",
-        "Wikidata_ID": "Q2467"
-      },
-      {
-        "text_label": "Breda",
-        "Wikidata_ID": "Q9822"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 213,
@@ -2294,10 +1920,6 @@
         "Wikidata_ID": "Q43"
       },
       {
-        "text_label": "Thessaloniki",
-        "Wikidata_ID": "Q17151"
-      },
-      {
         "text_label": "Greece",
         "Wikidata_ID": "Q41"
       },
@@ -2322,21 +1944,11 @@
   },
   {
     "row": 219,
-    "entities": [
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q958049"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 220,
-    "entities": [
-      {
-        "text_label": "Murcia",
-        "Wikidata_ID": "Q195459"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 221,
@@ -2344,12 +1956,7 @@
   },
   {
     "row": 222,
-    "entities": [
-      {
-        "text_label": "Cromford",
-        "Wikidata_ID": "Q1000915"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 223,
@@ -2361,12 +1968,7 @@
   },
   {
     "row": 225,
-    "entities": [
-      {
-        "text_label": "Stephanskirchen",
-        "Wikidata_ID": "Q532986"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 226,
@@ -2378,56 +1980,28 @@
   },
   {
     "row": 228,
-    "entities": [
-      {
-        "text_label": "Ioannina",
-        "Wikidata_ID": "Q183199"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 229,
-    "entities": [
-      {
-        "text_label": "Aachen",
-        "Wikidata_ID": "Q1017"
-      },
-      {
-        "text_label": "Oberhausen",
-        "Wikidata_ID": "Q2838"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 230,
     "entities": [
       {
-        "text_label": "Balkans",
-        "Wikidata_ID": "Q23522"
-      },
-      {
-        "text_label": "Ottoman Empire",
-        "Wikidata_ID": "Q12560"
+        "text_label": "coat of arms of the Ottoman Empire",
+        "Wikidata_ID": "Q817316"
       }
     ]
   },
   {
     "row": 231,
-    "entities": [
-      {
-        "text_label": "Siegfried Line",
-        "Wikidata_ID": "Q154504"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 232,
-    "entities": [
-      {
-        "text_label": "Region of Murcia",
-        "Wikidata_ID": "Q5772"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 233,

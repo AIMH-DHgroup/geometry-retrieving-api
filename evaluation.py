@@ -59,7 +59,7 @@ def count_entities(data):
             processed_ids.add(data[i]['entities'][j]['Wikidata_ID'])
     return count, count_duplicates
 
-def calculate_metrics(gold_data, predicted_data, all_dataset):
+def calculate_metrics(gold_data, predicted_data):
     """
     Calculate precision, recall e F1 score for ID retrieving.
     """
@@ -71,145 +71,186 @@ def calculate_metrics(gold_data, predicted_data, all_dataset):
     # Calculate total entities
     (gold_count, gold_duplicates_count) = count_entities(gold_data)
     (predicted_count, predicted_duplicates_count) = count_entities(predicted_data)
-    print(f"\nNumber of total entities: {gold_count} (gold standard), {predicted_count} (predicted)")
-    print(f"Number of total duplicated entities: {gold_duplicates_count} (gold standard), {predicted_duplicates_count} (predicted)")
+    tot = gold_count + predicted_count
+    print(f"\nNumber of total entities: {gold_count} (gold standard), {predicted_count} (predicted), {tot} (overall)")
+    print(f"Number of total duplicated entities (of the same event): {gold_duplicates_count} (gold standard), {predicted_duplicates_count} (predicted)")
 
     total_processed_ids = 0
 
     if len(gold_data) != len(predicted_data):
         raise ValueError(f"The files does not have the same number of rows ({len(gold_data)}, {len(predicted_data)}).")
 
-    if all_dataset:
+    for i in range(len(gold_data)):
 
-        for i in range(len(gold_data)):
+        gold_entities = gold_data[i].get('entities', [])
+        predicted_entities = predicted_data[i].get('entities', [])
 
-            gold_entities = gold_data[i].get('entities', [])
-            predicted_entities = predicted_data[i].get('entities', [])
+        processed_ids = set()
 
-            processed_ids = set()
-
-            if not gold_entities:
-                if not predicted_entities:
-                    continue
-                else:
-
-                    wikidata_ids = [ent["Wikidata_ID"] for ent in predicted_entities]
-
-                    for predicted in predicted_entities:
-                        predicted_id = predicted.get('Wikidata_ID')
-
-                        if predicted_id not in processed_ids:
-                            count_predicted_id = wikidata_ids.count(predicted_id)
-
-                            entity_false_positive += count_predicted_id
-                            processed_ids.add(predicted_id)
-
-                    total_processed_ids += len(processed_ids)
-                    continue
-
+        if not gold_entities:
             if not predicted_entities:
+                continue
+            else:
 
-                wikidata_ids = [ent["Wikidata_ID"] for ent in gold_entities]
+                wikidata_ids = [ent["Wikidata_ID"] for ent in predicted_entities]
 
-                for gold in gold_entities:
-                    gold_id = gold.get('Wikidata_ID')
+                for predicted in predicted_entities:
+                    predicted_id = predicted.get('Wikidata_ID')
 
-                    if gold_id not in processed_ids:
-                        count_gold_id = wikidata_ids.count(gold_id)
+                    if predicted_id not in processed_ids:
+                        count_predicted_id = wikidata_ids.count(predicted_id)
 
-                        entity_false_negative += count_gold_id
-                        processed_ids.add(gold_id)
+                        entity_false_positive += count_predicted_id
+                        processed_ids.add(predicted_id)
 
-                total_processed_ids += len(processed_ids)
                 continue
 
-            gold_values = [e['Wikidata_ID'] for e in gold_entities if 'Wikidata_ID' in e]
-            predicted_values = [e['Wikidata_ID'] for e in predicted_entities if 'Wikidata_ID' in e]
+        if not predicted_entities:
+
+            wikidata_ids = [ent["Wikidata_ID"] for ent in gold_entities]
 
             for gold in gold_entities:
                 gold_id = gold.get('Wikidata_ID')
 
                 if gold_id not in processed_ids:
+                    count_gold_id = wikidata_ids.count(gold_id)
 
-                    wikidata_gold_ids = [ent["Wikidata_ID"] for ent in gold_entities]
-                    wikidata_predicted_ids = [ent["Wikidata_ID"] for ent in predicted_entities]
-
-                    count_gold_id = wikidata_gold_ids.count(gold_id)
-
-                    if gold_id in predicted_values:
-
-                        count_predicted_id = wikidata_predicted_ids.count(gold_id)
-
-                        if count_gold_id == count_predicted_id:
-                            entity_true_positive += 1
-                        else:
-
-                            entity_true_positive += count_predicted_id
-                            diff = count_gold_id - count_predicted_id
-
-                            if diff > 0:
-                                entity_false_negative += diff
-                            else:
-                                entity_false_positive += diff
-
-                    else:
-                        entity_false_negative += count_gold_id
-
+                    entity_false_negative += count_gold_id
                     processed_ids.add(gold_id)
 
-            for predicted in predicted_entities:
-                predicted_id = predicted.get('Wikidata_ID')
-
-                if predicted_id not in processed_ids:
-
-                    wikidata_ids = [ent["Wikidata_ID"] for ent in predicted_entities]
-
-                    count_predicted_id = wikidata_ids.count(predicted_id)
-
-                    if predicted_id not in gold_values:
-                        entity_false_positive += count_predicted_id
-                        entity_false_negative -= count_predicted_id
-
-                    processed_ids.add(predicted_id)
-
             total_processed_ids += len(processed_ids)
+            continue
 
-    else:
-        for i in range(len(predicted_data)):
-            gold_entities = gold_data[i].get('entities', [])
-            predicted_entities = predicted_data[i].get('entities', [])
+        gold_values = [e['Wikidata_ID'] for e in gold_entities if 'Wikidata_ID' in e]
+        predicted_values = [e['Wikidata_ID'] for e in predicted_entities if 'Wikidata_ID' in e]
 
-            for pred in predicted_entities:
-                pred_id = pred.get('Wikidata_ID')
-                pred_label = pred.get('text_label')
+        for gold in gold_entities:
 
-                if not pred_label:
-                    continue
+            gold_id = gold.get('Wikidata_ID')
+            gold_label = gold.get('text_label')
 
-                for gold in gold_entities:
-                    gold_id = gold.get('Wikidata_ID')
-                    gold_label = gold.get('text_label')
+            if gold_id not in processed_ids:
 
-                    if not gold_label:
-                        continue
+                wikidata_gold_ids = [ent["Wikidata_ID"] for ent in gold_entities]
+                wikidata_predicted_ids = [ent["Wikidata_ID"] for ent in predicted_entities]
 
-                    if labels_match(pred_label, gold_label):
-                        if pred_id == gold_id:
-                            entity_true_positive += 1
-                        elif pred_id and gold_id and pred_id != gold_id:
-                            entity_false_positive += 1
-                        elif pred_id and not gold_id:
-                            entity_false_positive += 1
-                        elif gold_id and not pred_id:
-                            entity_false_negative += 1
-                        break
+                count_gold_id = wikidata_gold_ids.count(gold_id)
+
+                labels_gold = [ent["text_label"] for ent in gold_entities]
+                labels_predicted = [ent["text_label"] for ent in predicted_entities]
+
+                count_gold_label = labels_gold.count(gold_label)
+                count_predicted_label = labels_predicted.count(gold_label)
+
+                diff_labels = count_gold_label - count_predicted_label
+
+                if gold_id in predicted_values:
+
+                    count_predicted_id = wikidata_predicted_ids.count(gold_id)
+
+                    if count_gold_id == count_predicted_id:
+                        entity_true_positive += count_predicted_id
+                    else:
+
+                        min_count = min(count_gold_id, count_predicted_id)
+                        entity_true_positive += min_count
+
+                        count_gold_id -= min_count
+                        count_predicted_id -= min_count
+                        if count_gold_id < 0:
+                            count_gold_id = 0
+                        if count_predicted_id < 0:
+                            count_predicted_id = 0
+                        diff = count_gold_id - count_predicted_id
+
+                        count_gold_label -= count_predicted_id
+                        count_predicted_label -= count_predicted_id
+                        if count_gold_label < 0:
+                            count_gold_label = 0
+                        if count_predicted_label < 0:
+                            count_predicted_label = 0
+                        diff_labels = count_gold_label - count_predicted_label
+
+                        while count_gold_id > 0 or count_predicted_id > 0:
+
+                            if diff > 0:
+
+                                if diff_labels == 0:
+
+                                    entity_false_positive += diff
+                                    break
+
+                                elif diff_labels > 0:
+
+                                    entity_false_negative += 1
+                                    if count_gold_label > 0:
+                                        count_gold_label -= 1
+                                    if count_predicted_label > 0:
+                                        count_predicted_label -= 1
+                                    diff_labels -= 1
+
+                                elif diff_labels < 0:
+
+                                    entity_false_positive += 1
+                                    if count_gold_label < 0:
+                                        count_gold_label += 0
+                                    if count_predicted_label < 0:
+                                        count_predicted_label += 0
+                                    diff_labels += 1
+
+                            elif diff < 0:
+
+                                entity_false_positive += abs(diff)
+                                break
+
+                            if count_gold_id > 0:
+                                count_gold_id -= 1
+                            if count_predicted_id > 0:
+                                count_predicted_id -= 1
+
+                            diff = count_gold_id - count_predicted_id
+
+                else:
+
+                    while count_gold_label > 0 or count_predicted_label > 0:
+
+                        if gold_label in labels_predicted and diff_labels > 0:
+                            entity_false_positive += count_gold_label
+                        elif gold_label not in labels_predicted and diff_labels > 0:
+                            entity_false_negative += count_gold_label
+
+                        if count_gold_label > 0:
+                            count_gold_label -= 1
+                        if count_predicted_label > 0:
+                            count_predicted_label -= 1
+
+                        diff_labels = count_gold_label - count_predicted_label
+
+                processed_ids.add(gold_id)
+
+        for predicted in predicted_entities:
+            predicted_id = predicted.get('Wikidata_ID')
+
+            if predicted_id not in processed_ids:
+
+                wikidata_ids = [ent["Wikidata_ID"] for ent in predicted_entities]
+
+                count_predicted_id = wikidata_ids.count(predicted_id)
+
+                if predicted_id not in gold_values:
+
+                    entity_false_positive += count_predicted_id
+
+                processed_ids.add(predicted_id)
+
+        total_processed_ids += len(processed_ids)
 
     # Metrics for keyword extraction
     entity_precision = entity_true_positive / (entity_true_positive + entity_false_positive) if (entity_true_positive + entity_false_positive) > 0 else 0
     entity_recall = entity_true_positive / (entity_true_positive + entity_false_negative) if (entity_true_positive + entity_false_negative) > 0 else 0
     entity_f1_score = (2 * entity_precision * entity_recall) / (entity_precision + entity_recall) if (entity_precision + entity_recall) > 0 else 0
 
-    print(f"Total unique processed IDs: {total_processed_ids}")
+    print(f"Total unique processed IDs of the gold standard: {total_processed_ids}")
 
     return entity_precision, entity_recall, entity_f1_score, entity_true_positive, entity_false_positive, entity_false_negative
 
@@ -219,7 +260,7 @@ if __name__ == "__main__":
     gold_file = load_json_files("./data", "entities_gold.json")
     predicted_file = load_json_files("./data", "entities_pred.json")
 
-    metrics = calculate_metrics(gold_file['entities_gold.json'], predicted_file['entities_pred.json'], True)
+    metrics = calculate_metrics(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
     (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
 
     print(f"\nPrecision: {precision}")

@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from typing import Optional
 from langdetect import detect
 from uuid import uuid4
+from flair.data import Sentence
+from flair.nn import Classifier
 import spacy
 import requests
 import time
@@ -575,6 +577,27 @@ def search_wikidata_entity(query, language='en'):
 
     return None
 
+
+async def parse_excel_xml(file):
+    content = await file.read()
+    tree = ET.ElementTree(ET.fromstring(content))
+    root = tree.getroot()
+
+    ns = {
+        'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
+        'html': 'http://www.w3.org/TR/REC-html40'
+    }
+
+    data_elements = root.findall(".//ss:Data[@ss:Type='String']", namespaces=ns)
+
+    extracted_texts = []
+    for elem in data_elements:
+        full_text = ''.join(elem.itertext()).strip()
+        extracted_texts.append(full_text)
+
+    return extracted_texts
+
+
 # ======= FastAPI endpoints =======
 
 @app.post("/geosparql")
@@ -1062,6 +1085,154 @@ async def analyze_geonames_csv(
             json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
 
         return FileResponse(path, media_type="application/ld+json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test")
+async def analyze_goldstandard(
+    file: UploadFile = File(..., description="XML file containing events"),
+    #lang: str = Query("en", description="Analysis language"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+        #lang = lang.lower()
+        #if lang not in SUPPORTED_LANGUAGES:
+        #    return JSONResponse(status_code=400, content={"error": not_supported_message})
+
+        #content = await file.read()
+        #df = pd.read_excel(pd.io.common.BytesIO(content), engine="odf")
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        for i, event in enumerate(content):
+
+            print(f"\nEvent content: {event}\n")
+
+            lang = detect(event)
+            doc, nlp = tokenize_text(event, lang=lang)     # try three run: auto-detect, "en" and "xx"
+            entities_spacy = extract_geo_entity(doc)
+            print(f"\nEntities found by spaCy: {', '.join(entities_spacy)}")
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            print(f"\nIndex: {i + 1}\n")
+
+            for entity in entities_spacy:
+
+                ent = search_wikidata_entity(entity)
+
+                print(f"\nEnt: {ent}\n")
+
+                if ent:
+                    feature = {
+                        "text_label": ent.get("label", ""),
+                        "Wikidata_ID": ent.get("id", "")
+                    }
+                    row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+@app.post("/test-flair")
+async def analyze_goldstandard_flair(
+    file: UploadFile = File(..., description="XML file containing events"),
+    #lang: str = Query("en", description="Analysis language"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+        #lang = lang.lower()
+        #if lang not in SUPPORTED_LANGUAGES:
+        #    return JSONResponse(status_code=400, content={"error": not_supported_message})
+
+        #content = await file.read()
+        #df = pd.read_excel(pd.io.common.BytesIO(content), engine="odf")
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        tagger = Classifier.load('ner')
+
+        for i, event in enumerate(content):
+
+            print(f"\nEvent content: {event}\n")
+
+            sentence = Sentence(event)
+            tagger.predict(sentence)
+            geo_entities = [
+                (entity.text, entity.get_label('ner').value, entity.score)
+                for entity in sentence.get_spans('ner')
+                if entity.get_label('ner').value == 'LOC'
+            ]
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            print(f"\nIndex: {i + 1}. Entities found by Flair:")
+            for text, label, score in geo_entities:
+                print(f"\n{text} ({label}) - score: {score:.4f}")
+
+            for text, label, score in geo_entities:
+
+                ent = search_wikidata_entity(text)
+
+                if ent:
+                    feature = {
+                        "text_label": ent.get("label", ""),
+                        "Wikidata_ID": ent.get("id", "")
+                    }
+                    row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])

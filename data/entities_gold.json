@@ -203,6 +203,10 @@
                 "Wikidata_ID": "Q2805"
             },
             {
+                "text_label": "Wupper",
+                "Wikidata_ID": "Q639374"
+            },
+            {
                 "text_label": "Cologne",
                 "Wikidata_ID": "Q365"
             },
@@ -380,7 +384,7 @@
         ]
     },
     {
-        "row":33,
+        "row": 33,
         "entities": []
     },
     {
@@ -719,20 +723,8 @@
                 "Wikidata_ID": "Q1524"
             },
             {
-                "text_label": "Panathenaic stadium",
-                "Wikidata_ID": "Q208811"
-            },
-            {
-                "text_label": "Loudovikou square",
-                "Wikidata_ID": "xxx"
-            },
-            {
                 "text_label": "Athens",
                 "Wikidata_ID": "Q1524"
-            },
-            {
-                "text_label": "Koumoundourou square",
-                "Wikidata_ID": "Q12883513"
             }
         ]
     },
@@ -823,7 +815,24 @@
     },
     {
         "row": 81,
-        "entities": []
+        "entities": [
+            {
+                "text_label": "Homberg",
+                "Wikidata_ID": "Q624176"
+            },
+            {
+                "text_label": "Uerdingen",
+                "Wikidata_ID": "Q447973"
+            },
+            {
+                "text_label": "Krefeld",
+                "Wikidata_ID": "Q2805"
+            },
+            {
+                "text_label": "Viersen",
+                "Wikidata_ID": "Q3902"
+            }
+        ]
     },
     {
         "row": 82,
@@ -1139,12 +1148,7 @@
     },
     {
         "row": 113,
-        "entities": [
-            {
-                "text_label": "Crystal Palace",
-                "Wikidata_ID": "Q202902"
-            }
-        ]
+        "entities": []
     },
     {
         "row": 114,
@@ -1618,7 +1622,16 @@
     },
     {
         "row": 165,
-        "entities": []
+        "entities": [
+            {
+                "text_label": "Lorraine",
+                "Wikidata_ID": "Q1137"
+            },
+            {
+                "text_label": "Lorraine",
+                "Wikidata_ID": "Q1137"
+            }
+        ]
     },
     {
         "row": 166,
@@ -1707,10 +1720,6 @@
             {
                 "text_label": "Aachen",
                 "Wikidata_ID": "Q1017"
-            },
-            {
-                "text_label": "Campo Santo Teutonico",
-                "Wikidata_ID": "Q27333"
             },
             {
                 "text_label": "Rome",
@@ -1813,10 +1822,6 @@
                 "Wikidata_ID": "Q183199"
             },
             {
-                "text_label": "Museum-Exhibition Complex of the Moscow Region \"New Jerusalem\"",
-                "Wikidata_ID": "Q4326653"
-            },
-            {
                 "text_label": "Ioannina",
                 "Wikidata_ID": "Q183199"
             }
@@ -1886,10 +1891,6 @@
             {
                 "text_label": "Britain",
                 "Wikidata_ID": "Q23666"
-            },
-            {
-                "text_label": "Crystal Palace",
-                "Wikidata_ID": "Q202902"
             }
         ]
     },
@@ -2061,10 +2062,6 @@
             {
                 "text_label": "Arta",
                 "Wikidata_ID": "Q208573"
-            },
-            {
-                "text_label": "Kalarry",
-                "Wikidata_ID": "xxx"
             },
             {
                 "text_label": "Kallarites",
@@ -2364,12 +2361,7 @@
     },
     {
         "row": 225,
-        "entities": [
-            {
-                "text_label": "Stephanskirche",
-                "Wikidata_ID": "Q106501081"
-            }
-        ]
+        "entities": []
     },
     {
         "row": 226,
@@ -2464,47 +2456,6 @@
     },
     {
         "row": 237,
-        "entities": []
-    },
-    {
-        "row": 238,
-        "entities": []
-    },
-    {
-        "row": 239,
-        "entities": []
-    },
-    {
-        "row": 240,
-        "entities": [
-            {
-                "text_label": "Lorraine",
-                "Wikidata_ID": "Q1137"
-            },
-            {
-                "text_label": "Lorraine",
-                "Wikidata_ID": "Q1137"
-            }
-        ]
-    },
-    {
-        "row": 241,
-        "entities": []
-    },
-    {
-        "row": 242,
-        "entities": []
-    },
-    {
-        "row": 243,
-        "entities": []
-    },
-    {
-        "row": 244,
-        "entities": []
-    },
-    {
-        "row": 245,
         "entities": []
     }
 ]
