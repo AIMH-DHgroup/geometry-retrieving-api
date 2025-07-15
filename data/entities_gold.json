@@ -199,20 +199,12 @@
                 "Wikidata_ID": "Q2805"
             },
             {
-                "text_label": "Krefeld",
-                "Wikidata_ID": "Q2805"
-            },
-            {
                 "text_label": "Wupper",
                 "Wikidata_ID": "Q639374"
             },
             {
                 "text_label": "Cologne",
                 "Wikidata_ID": "Q365"
-            },
-            {
-                "text_label": "Krefeld",
-                "Wikidata_ID": "Q2805"
             },
             {
                 "text_label": "Cologne",
@@ -225,10 +217,6 @@
             {
                 "text_label": "Netherlands",
                 "Wikidata_ID": "Q55"
-            },
-            {
-                "text_label": "Krefeld",
-                "Wikidata_ID": "Q2805"
             },
             {
                 "text_label": "Holland",
@@ -246,7 +234,6 @@
                 "text_label": "Krefeld",
                 "Wikidata_ID": "Q2805"
             }
-
         ]
     },
     {
@@ -667,6 +654,14 @@
             {
                 "text_label": "Nancy",
                 "Wikidata_ID": "Q40898"
+            },
+            {
+                "text_label": "Vannes-le Châtel",
+                "Wikidata_ID": "Q920268"
+            },
+            {
+                "text_label": "Bayel",
+                "Wikidata_ID": "Q1153712"
             },
             {
                 "text_label": "Choisy-le-Roi",
@@ -1108,12 +1103,7 @@
     },
     {
         "row": 108,
-        "entities": [
-            {
-                "text_label": "Saint-Martin-des-Champs Priory",
-                "Wikidata_ID": "Q656302"
-            }
-        ]
+        "entities": []
     },
     {
         "row": 109,
@@ -1630,6 +1620,34 @@
             {
                 "text_label": "Lorraine",
                 "Wikidata_ID": "Q1137"
+            },
+            {
+                "text_label": "Meisenthal",
+                "Wikidata_ID": "Q22915"
+            },
+            {
+                "text_label": "Portieux",
+                "Wikidata_ID": "Q836332"
+            },
+            {
+                "text_label": "Plaine-de-Walsch",
+                "Wikidata_ID": "Q22242"
+            },
+            {
+                "text_label": "Saint-Quirin",
+                "Wikidata_ID": "Q21977"
+            },
+            {
+                "text_label": "Baccarat",
+                "Wikidata_ID": "Q319282"
+            },
+            {
+                "text_label": "Vannes-le-Châtel",
+                "Wikidata_ID": "Q920268"
+            },
+            {
+                "text_label": "Saint-Louis",
+                "Wikidata_ID": "Q384516"
             }
         ]
     },
@@ -1976,6 +1994,10 @@
             {
                 "text_label": "Mediterranean",
                 "Wikidata_ID": "Q4918"
+            },
+            {
+                "text_label": "Kiruna",
+                "Wikidata_ID": "Q83232"
             },
             {
                 "text_label": "Tunisia",
