@@ -3,14 +3,19 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 from urllib.parse import urlparse, unquote
+import urllib.error
 from fastapi import UploadFile, File
 import xml.etree.ElementTree as ET
-from pydantic import BaseModel
 from typing import Optional
 from langdetect import detect
 from uuid import uuid4
 from flair.data import Sentence
-from flair.nn import Classifier
+from flair.models import SequenceTagger
+from flair.splitter import SegtokSentenceSplitter
+from sentence_transformers import SentenceTransformer, util
+from SPARQLWrapper import SPARQLWrapper, JSON
+from geopy.distance import geodesic
+from pydantic import BaseModel
 import spacy
 import requests
 import time
@@ -120,8 +125,11 @@ def tokenize_text(text, lang="en"):
     doc = nlp(text)
     return doc, nlp
 
-def extract_geo_entity(doc):
-    return [ent.text for ent in doc.ents if ent.label_ in ["LOC", "GPE", "NOUN", "PROPN"]]
+def extract_geo_entity(doc, context=None):
+    if context is None:
+        return [ent.text for ent in doc.ents if ent.label_ in ["LOC", "GPE", "NOUN", "PROPN"]]
+    else:
+        return [{"text": ent.text, "context": context} for ent in doc.ents if ent.label_ in ["LOC", "GPE"]]
 
 def disambiguation_with_wikifier(text, lang="en"):
     url = "http://www.wikifier.org/annotate-article"
@@ -134,6 +142,22 @@ def disambiguation_with_wikifier(text, lang="en"):
         "applyFilters": "true",
         "filterCategories": "true",
         "threshold": "0.8",
+    }
+    response = requests.post(url, data=data)
+    response.raise_for_status()
+    return response.json().get("annotations", [])
+
+def call_wikifier(text: str, lang: str = "en", threshold: float = 0.8):
+    url = "http://www.wikifier.org/annotate-article"
+    data = {
+        'text': text,
+        'lang': lang,
+        'userKey': WIKIFIER_API_KEY,
+        'support': 1,
+        'pageRankSqThreshold': threshold,
+        'applyPageRankSqThreshold': True,
+        'nTopDfValuesToIgnore': 200,
+        'fastMode': False
     }
     response = requests.post(url, data=data)
     response.raise_for_status()
@@ -548,8 +572,11 @@ def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "
 import requests
 
 
-def search_wikidata_entity(query, language='en'):
+def search_wikidata_entity(query, language='en', attempt=1):
     url = "https://www.wikidata.org/w/api.php"
+    headers = {
+        "User-Agent": "GeoEntityLinker/1.0 (aimhdhgroup@gmail.com)"
+    }
     params = {
         "action": "wbsearchentities",
         "format": "json",
@@ -559,7 +586,7 @@ def search_wikidata_entity(query, language='en'):
     }
 
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, headers=headers)
         response.raise_for_status()
         results = response.json().get("search", [])
 
@@ -573,7 +600,18 @@ def search_wikidata_entity(query, language='en'):
                 }
 
     except requests.RequestException as e:
-        print(f"\n⚠️ Wikidata query error : {e}")
+        attempt += 1
+        wait = 2
+        if attempt == 2:
+            wait = 5
+        elif attempt == 3:
+            wait = 10
+        if attempt <= 3:
+            print(f"\n⚠️ Wikidata query error : {e}. Retrying attempt {attempt}...")
+            time.sleep(wait)
+            search_wikidata_entity(query, language, attempt)
+        else:
+            print(f"\n⚠️ Wikidata query error : {e}. Skipping...")
 
     return None
 
@@ -596,6 +634,108 @@ async def parse_excel_xml(file):
         extracted_texts.append(full_text)
 
     return extracted_texts
+
+def query_wikidata(entity_label, lang="en"):
+    query = f"""
+    SELECT ?item ?itemLabel WHERE {{
+      ?item rdfs:label "{entity_label}"@{lang} .
+      ?item wdt:P31/wdt:P279* wd:Q618123 .  # instance of (or subclass of) geographical entity
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{lang}" }}
+    }}
+    LIMIT 3
+    """
+    url = "https://query.wikidata.org/sparql"
+    headers = {"Accept": "application/sparql-results+json"}
+    response = requests.get(url, params={'query': query}, headers=headers)
+    results = response.json().get("results", {}).get("bindings", [])
+    return [{"label": r["itemLabel"]["value"], "id": r["item"]["value"].split("/")[-1]} for r in results]
+
+def filter_by_mentions(wikifier_result, mentions):
+    entities = []
+    for ann in wikifier_result.get("annotations", []):
+        if ann["title"] in mentions:
+            entities.append({
+                "title": ann["title"],
+                "wikiDataId": ann.get("wikiDataId")
+            })
+    return entities
+
+def choose_best(model, candidates, context, other_coords=[]):
+    if not candidates:
+        return None
+
+    context_embedding = model.encode(context, convert_to_tensor=True)
+    scored = []
+    for c in candidates:
+        desc_embedding = model.encode(c['description'], convert_to_tensor=True)
+        sim = util.cos_sim(context_embedding, desc_embedding).item()
+
+        dist_penalty = 0
+        if c['coord'] and other_coords:
+            distances = [geodesic(c['coord'], other).km for other in other_coords if other]
+            dist_penalty = sum(distances) / len(distances)
+
+        score = sim # sim - (dist_penalty / 10000)
+        scored.append((score, c))
+
+    best = max(scored, key=lambda x: x[0])[1]
+    return best
+
+def query_candidates(sparql, label, lang="en", attempt=1):
+
+    try:
+        sparql.setQuery(f"""
+            SELECT ?item ?itemLabel ?description ?coord WHERE {{
+              ?article schema:about ?item ;
+                       schema:isPartOf <https://{lang}.wikipedia.org/> ;
+                       schema:name "{label}"@{lang} .
+              OPTIONAL {{ ?item schema:description ?description FILTER (lang(?description) = "{lang}") }}
+              OPTIONAL {{ ?item wdt:P625 ?coord }}
+              SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{lang}" }}
+            }}
+            LIMIT 3
+            """)
+        results = sparql.query().convert()['results']['bindings']
+        out = []
+        for r in results:
+            qid = r["item"]["value"].split("/")[-1]
+            desc = r.get("description", {}).get("value", "")
+            coord = r.get("coord", {}).get("value", "")
+            latlon = None
+            if coord:
+                raw = coord.replace("Point(", "").replace(")", "")
+                lon, lat = map(float, raw.split())
+                latlon = (lat, lon)
+            if is_geographic_entity(qid):
+                out.append({
+                    "qid": qid,
+                    "label": r["itemLabel"]["value"],
+                    "description": desc,
+                    "coord": latlon
+                })
+        return out
+    except urllib.error.HTTPError as e:
+        if e.code == 504:
+            print(f"[WIKIDATA] Timeout for '{label}'")
+        elif e.code == 429:
+            attempt += 1
+            wait = 2
+            if attempt == 2:
+                wait = 5
+            elif attempt == 3:
+                wait = 10
+            if attempt <= 3:
+                print(f"[WIKIDATA] Too many requests for '{label}'. Retrying attempt {attempt}...")
+                time.sleep(wait)
+                query_candidates(sparql, label, lang, attempt)
+            else:
+                print(f"[WIKIDATA] Too many requests for '{label}'. Skipping...")
+        else:
+            print(f"[WIKIDATA] Error: {e} for '{label}'")
+            return []
+    except Exception as e:
+        print(f"[WIKIDATA] Error: '{label}': {e}")
+        return []
 
 
 # ======= FastAPI endpoints =======
@@ -1104,12 +1244,6 @@ async def analyze_goldstandard(
     Extract the geographic entities and apply the disambiguation process.
     """
     try:
-        #lang = lang.lower()
-        #if lang not in SUPPORTED_LANGUAGES:
-        #    return JSONResponse(status_code=400, content={"error": not_supported_message})
-
-        #content = await file.read()
-        #df = pd.read_excel(pd.io.common.BytesIO(content), engine="odf")
 
         content = await parse_excel_xml(file)
 
@@ -1120,7 +1254,7 @@ async def analyze_goldstandard(
             print(f"\nEvent content: {event}\n")
 
             lang = detect(event)
-            doc, nlp = tokenize_text(event, lang=lang)     # try three run: auto-detect, "en" and "xx"
+            doc, nlp = tokenize_text(event, lang=lang)
             entities_spacy = extract_geo_entity(doc)
             print(f"\nEntities found by spaCy: {', '.join(entities_spacy)}")
 
@@ -1175,43 +1309,154 @@ async def analyze_goldstandard_flair(
     Extract the geographic entities and apply the disambiguation process.
     """
     try:
-        #lang = lang.lower()
-        #if lang not in SUPPORTED_LANGUAGES:
-        #    return JSONResponse(status_code=400, content={"error": not_supported_message})
-
-        #content = await file.read()
-        #df = pd.read_excel(pd.io.common.BytesIO(content), engine="odf")
 
         content = await parse_excel_xml(file)
 
         features = []
 
-        tagger = Classifier.load('ner')
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+        tagger = SequenceTagger.load("ner") # try flair/ner-english
+        splitter = SegtokSentenceSplitter()
 
         for i, event in enumerate(content):
-
-            print(f"\nEvent content: {event}\n")
-
-            sentence = Sentence(event)
-            tagger.predict(sentence)
-            geo_entities = [
-                (entity.text, entity.get_label('ner').value, entity.score)
-                for entity in sentence.get_spans('ner')
-                if entity.get_label('ner').value == 'LOC'
-            ]
 
             row = {
                 "row": i + 1,
                 "entities": []
             }
 
-            print(f"\nIndex: {i + 1}. Entities found by Flair:")
-            for text, label, score in geo_entities:
-                print(f"\n{text} ({label}) - score: {score:.4f}")
+            entities_flair = []
 
-            for text, label, score in geo_entities:
+            sentences = splitter.split(event)
 
-                ent = search_wikidata_entity(text)
+            tagger.predict(sentences)
+
+            for sentence in sentences:
+                for entity in sentence.get_spans('ner'):
+                    if entity.get_label("ner").value == "LOC":
+                        entities_flair.append({
+                            "text": entity.text,
+                            "context": sentence.to_original_text()
+                        })
+
+            all_coords = []
+
+            print("Entities found:")
+            for ent in entities_flair:
+                print(ent['text'])
+
+            for ent in entities_flair:
+                cands = query_candidates(sparql, ent['text'])
+                if cands:
+                    all_coords += [c["coord"] for c in cands if c["coord"]]
+
+            for ent in entities_flair:
+
+                if all_coords:
+                    label = ent['text']
+                    context = ent['context']
+                    candidates = query_candidates(sparql, label)
+                    if candidates:
+                        best = choose_best(model, candidates, context, all_coords)
+
+                        if best:
+                            feature = {
+                                "text_label": label,
+                                "Wikidata_ID": best['qid']
+                            }
+                            row["entities"].append(feature)
+                    else:
+                        entity = search_wikidata_entity(ent['text'])
+                        if entity:
+                            feature = {
+                                "text_label": entity['label'],
+                                "Wikidata_ID": entity['id']
+                            }
+                            row["entities"].append(feature)
+
+                else:
+                    entity = search_wikidata_entity(ent['text'])
+                    if entity:
+                        feature = {
+                            "text_label": entity['label'],
+                            "Wikidata_ID": entity['id']
+                        }
+                        row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-flair-custom-linker")
+async def analyze_goldstandard_flair_custom_linker(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        tagger = SequenceTagger.load("ner")
+
+        splitter = SegtokSentenceSplitter()
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            sentences = splitter.split(event)
+            tagger.predict(sentences)
+
+            entities_flair = []
+
+            for sentence in sentences:
+                for entity in sentence.get_spans('ner'):
+                    if entity.get_label("ner").value == "LOC":
+                        entities_flair.append(entity)
+
+            linked = []
+            for ent in entities_flair:
+                candidates = query_wikidata(ent.text)
+                e = {
+                    "text": ent.text,
+                    "candidates": candidates
+                }
+                linked.append(e)
+                print(f"\nE: {e}")
+
+            for entity in entities_flair:
+
+                ent = search_wikidata_entity(entity.text)
 
                 if ent:
                     feature = {
@@ -1219,6 +1464,373 @@ async def analyze_goldstandard_flair(
                         "Wikidata_ID": ent.get("id", "")
                     }
                     row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-wikifier")
+async def analyze_goldstandard_wikifier(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            result = call_wikifier(event)
+            print(f"\nResult: {result}")
+            for ann in result:
+                if any("location" in t.lower() for t in ann.get("types", [])):
+                    feature = {
+                        "text_label": ann["title"],
+                        "Wikidata_ID": ann.get("wikiDataId")
+                    }
+                    row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-flair-wikifier")
+async def analyze_goldstandard_flair_wikifier(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        tagger = SequenceTagger.load("ner")
+
+        splitter = SegtokSentenceSplitter()
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            sentences = splitter.split(event)
+            tagger.predict(sentences)
+
+            entities_flair = []
+
+            for sentence in sentences:
+                for entity in sentence.get_spans('ner'):
+                    if entity.get_label("ner").value == "LOC":
+                        entities_flair.append(entity)
+
+            wikifier_result = call_wikifier(event)
+
+            filtered = filter_by_mentions(wikifier_result, entities_flair)
+
+            for entity in filtered:
+                feature = {
+                    "text_label": entity["title"],
+                    "Wikidata_ID": entity["wikiDataId"]
+                }
+                row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-rel")
+async def analyze_goldstandard_rel(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        api_url = "https://rel.cs.ru.nl/api"
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+        tagger = SequenceTagger.load("ner")
+        splitter = SegtokSentenceSplitter()
+
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            entities_rel = []
+
+            all_coords = []
+
+            rel_error = False
+
+            try:
+                response = requests.post(
+                    api_url,
+                    json={"text": event, "spans": []},
+                    headers={"Connection": "close"},
+                    timeout=60
+                )
+                response.raise_for_status()
+                el_result = response.json()
+
+            except requests.exceptions.RequestException as e:
+                print(f"[Requests Error] Row {i + 1}: failed request - {e}. Trying with Flair...")
+                el_result = []
+                rel_error = True
+
+            except json.JSONDecodeError as e:
+                print(f"[JSON Error] Row {i + 1}: the answer is not a valid JSON - {e}. Trying with Flair...")
+                el_result = []
+                rel_error = True
+
+            if not rel_error:
+
+                print(f"\nRow: {i+1}, entities found by REL: {el_result}")
+
+                for entity in el_result:
+
+                    if entity[-1] == "LOC":
+                        entities_rel.append({
+                            "text": entity[3],
+                            "context": event
+                        })
+
+            else:
+
+                sentences = splitter.split(event)
+
+                tagger.predict(sentences)
+
+                for sentence in sentences:
+                    for entity in sentence.get_spans('ner'):
+                        if entity.get_label("ner").value == "LOC":
+                            entities_rel.append({
+                                "text": entity.text,
+                                "context": sentence.to_original_text()
+                            })
+
+            print("Entities found:")
+            for ent in entities_rel:
+                print(ent['text'])
+
+            for ent in entities_rel:
+                cands = query_candidates(sparql, ent['text'])
+                if cands:
+                    all_coords += [c["coord"] for c in cands if c["coord"]]
+
+            for ent in entities_rel:
+
+                if all_coords:
+                    label = ent['text']
+                    context = ent['context']
+                    candidates = query_candidates(sparql, label)
+                    if candidates:
+                        best = choose_best(model, candidates, context, all_coords)
+
+                        if best:
+                            feature = {
+                                "text_label": label,
+                                "Wikidata_ID": best['qid']
+                            }
+                            row["entities"].append(feature)
+                    else:
+                        entity = search_wikidata_entity(ent['text'])
+                        if entity:
+                            feature = {
+                                "text_label": entity['label'],
+                                "Wikidata_ID": entity['id']
+                            }
+                            row["entities"].append(feature)
+
+                else:
+                    entity = search_wikidata_entity(ent['text'])
+                    if entity:
+                        feature = {
+                            "text_label": entity['label'],
+                            "Wikidata_ID": entity['id']
+                        }
+                        row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-spacy")
+async def analyze_goldstandard_spacy(
+    file: UploadFile = File(..., description="XML file containing events"),
+    #lang: str = Query("en", description="Analysis language"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            lang = detect(event)
+            doc, nlp = tokenize_text(event, lang=lang)
+            entities_spacy = extract_geo_entity(doc, event)
+
+            all_coords = []
+
+            print("Entities found:")
+            for ent in entities_spacy:
+                print(ent['text'])
+
+            for ent in entities_spacy:
+                cands = query_candidates(sparql, ent['text'])
+                if cands:
+                    all_coords += [c["coord"] for c in cands if c["coord"]]
+
+            for ent in entities_spacy:
+
+                if all_coords:
+                    label = ent['text']
+                    context = ent['context']
+                    candidates = query_candidates(sparql, label)
+                    if candidates:
+                        best = choose_best(model, candidates, context, all_coords)
+
+                        if best:
+                            feature = {
+                                "text_label": label,
+                                "Wikidata_ID": best['qid']
+                            }
+                            row["entities"].append(feature)
+                    else:
+                        entity = search_wikidata_entity(ent['text'])
+                        if entity:
+                            feature = {
+                                "text_label": entity['label'],
+                                "Wikidata_ID": entity['id']
+                            }
+                            row["entities"].append(feature)
+
+                else:
+                    entity = search_wikidata_entity(ent['text'])
+                    if entity:
+                        feature = {
+                            "text_label": entity['label'],
+                            "Wikidata_ID": entity['id']
+                        }
+                        row["entities"].append(feature)
 
             print(f"\nRow: {row}\n")
             features.append(row)

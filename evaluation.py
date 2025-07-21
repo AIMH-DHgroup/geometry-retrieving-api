@@ -137,31 +137,33 @@ def calculate_metrics_only_ner(gold_data, predicted_data):
 
             if gold_label not in processed_labels:
 
-                entity_false_negative += diff_labels
+                if gold_label not in labels_predicted:
 
-            else:
-
-                if diff_labels == 0:
-
-                    entity_true_positive += diff_labels
-
-                elif diff_labels > 0:
-
-                    entity_true_positive += count_predicted_label
-                    count_gold_label -= count_predicted_label
-                    count_predicted_label -= count_predicted_label
-                    diff_labels = count_gold_label - count_predicted_label
                     entity_false_negative += diff_labels
 
-                elif diff_labels < 0:
+                else:
 
-                    entity_true_positive += count_gold_label
-                    count_predicted_label -= count_gold_label
-                    count_gold_label -= count_gold_label
-                    diff_labels =  count_predicted_label - count_gold_label
-                    entity_false_positive += diff_labels
+                    if diff_labels == 0:
 
-            processed_labels.add(gold_label)
+                        entity_true_positive += count_predicted_label
+
+                    elif diff_labels > 0:
+
+                        entity_true_positive += count_predicted_label
+                        count_gold_label -= count_predicted_label
+                        count_predicted_label -= count_predicted_label
+                        diff_labels = count_gold_label - count_predicted_label
+                        entity_false_negative += diff_labels
+
+                    elif diff_labels < 0:
+
+                        entity_true_positive += count_gold_label
+                        count_predicted_label -= count_gold_label
+                        count_gold_label -= count_gold_label
+                        diff_labels =  count_predicted_label - count_gold_label
+                        entity_false_positive += abs(diff_labels)
+
+                processed_labels.add(gold_label)
 
         for predicted in predicted_entities:
             predicted_label = predicted.get('text_label')
@@ -267,31 +269,33 @@ def calculate_metrics_only_id(gold_data, predicted_data):
 
             if gold_id not in processed_ids:
 
-                entity_false_negative += diff_labels
+                if gold_id not in id_predicted:
 
-            else:
-
-                if diff_labels == 0:
-
-                    entity_true_positive += diff_labels
-
-                elif diff_labels > 0:
-
-                    entity_true_positive += count_predicted_id
-                    count_gold_id -= count_predicted_id
-                    count_predicted_id -= count_predicted_id
-                    diff_labels = count_gold_id - count_predicted_id
                     entity_false_negative += diff_labels
 
-                elif diff_labels < 0:
+                else:
 
-                    entity_true_positive += count_gold_id
-                    count_predicted_id -= count_gold_id
-                    count_gold_id -= count_gold_id
-                    diff_labels =  count_predicted_id - count_gold_id
-                    entity_false_positive += diff_labels
+                    if diff_labels == 0:
 
-            processed_ids.add(gold_id)
+                        entity_true_positive += count_predicted_id
+
+                    elif diff_labels > 0:
+
+                        entity_true_positive += count_predicted_id
+                        count_gold_id -= count_predicted_id
+                        count_predicted_id -= count_predicted_id
+                        diff_labels = count_gold_id - count_predicted_id
+                        entity_false_negative += diff_labels
+
+                    elif diff_labels < 0:
+
+                        entity_true_positive += count_gold_id
+                        count_predicted_id -= count_gold_id
+                        count_gold_id -= count_gold_id
+                        diff_labels =  count_predicted_id - count_gold_id
+                        entity_false_positive += abs(diff_labels)
+
+                processed_ids.add(gold_id)
 
         for predicted in predicted_entities:
             predicted_id = predicted.get('Wikidata_ID')
@@ -412,63 +416,49 @@ def calculate_metrics(gold_data, predicted_data):
                         entity_true_positive += count_predicted_id
                     else:
 
-                        min_count = min(count_gold_id, count_predicted_id)
-                        entity_true_positive += min_count
-
-                        count_gold_id -= min_count
-                        count_predicted_id -= min_count
-                        if count_gold_id < 0:
-                            count_gold_id = 0
-                        if count_predicted_id < 0:
-                            count_predicted_id = 0
                         diff = count_gold_id - count_predicted_id
 
-                        count_gold_label -= count_predicted_id
-                        count_predicted_label -= count_predicted_id
-                        if count_gold_label < 0:
-                            count_gold_label = 0
-                        if count_predicted_label < 0:
-                            count_predicted_label = 0
-                        diff_labels = count_gold_label - count_predicted_label
+                        if diff > 0:
 
-                        while count_gold_id > 0 or count_predicted_id > 0:
+                            if diff_labels == 0:
 
-                            if diff > 0:
+                                entity_true_positive += count_predicted_id
 
-                                if diff_labels == 0:
+                            elif diff_labels > 0:
 
-                                    entity_false_positive += diff
-                                    break
+                                entity_true_positive += count_predicted_id
+                                count_gold_id -= count_predicted_id
+                                count_predicted_id -= count_predicted_id
+                                diff = count_gold_id - count_predicted_id
 
-                                elif diff_labels > 0:
+                                entity_false_negative += diff
 
-                                    entity_false_negative += 1
-                                    if count_gold_label > 0:
-                                        count_gold_label -= 1
-                                    if count_predicted_label > 0:
-                                        count_predicted_label -= 1
-                                    diff_labels -= 1
+                            elif diff_labels < 0:
 
-                                elif diff_labels < 0:
+                                entity_true_positive += count_predicted_id
+                                count_gold_id -= count_predicted_id
+                                count_predicted_id -= count_predicted_id
+                                diff = count_gold_id - count_predicted_id
 
-                                    entity_false_positive += 1
-                                    if count_gold_label < 0:
-                                        count_gold_label += 0
-                                    if count_predicted_label < 0:
-                                        count_predicted_label += 0
-                                    diff_labels += 1
+                                entity_false_negative += diff
 
-                            elif diff < 0:
+                                count_gold_label -= count_predicted_id
+                                count_predicted_label -= count_predicted_id
 
-                                entity_false_positive += abs(diff)
-                                break
+                                count_gold_label -= count_gold_id
+                                count_predicted_label -= count_gold_id
 
-                            if count_gold_id > 0:
-                                count_gold_id -= 1
-                            if count_predicted_id > 0:
-                                count_predicted_id -= 1
+                                diff_labels = count_gold_label - count_predicted_label
 
-                            diff = count_gold_id - count_predicted_id
+                                entity_false_positive += abs(diff_labels)
+
+                        elif diff < 0:
+
+                            entity_false_positive += abs(diff)
+
+                        elif diff == 0:
+
+                            entity_true_positive += count_predicted_id
 
                 else:
 
@@ -517,26 +507,34 @@ def calculate_metrics(gold_data, predicted_data):
 
 if __name__ == "__main__":
 
-    only_ner = False
-    only_id = False
-
     gold_file = load_json_files("./data", "entities_gold.json")
     predicted_file = load_json_files("./data", "entities_pred.json")
 
-    if only_ner:
+    print("\nNER")
+    metrics = calculate_metrics_only_ner(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
+    (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
 
-        metrics = calculate_metrics_only_ner(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
-        (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
+    print(f"\nPrecision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"F1 score: {f1_score}")
+    print(f"True positive: {true_positive}")
+    print(f"False positive: {false_positive}")
+    print(f"False negative: {false_negative}")
 
-    elif only_id:
+    print("\nID")
+    metrics = calculate_metrics_only_id(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
+    (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
 
-        metrics = calculate_metrics_only_id(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
-        (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
+    print(f"\nPrecision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"F1 score: {f1_score}")
+    print(f"True positive: {true_positive}")
+    print(f"False positive: {false_positive}")
+    print(f"False negative: {false_negative}")
 
-    else:
-
-        metrics = calculate_metrics(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
-        (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
+    print("\nALL")
+    metrics = calculate_metrics(gold_file['entities_gold.json'], predicted_file['entities_pred.json'])
+    (precision, recall, f1_score, true_positive, false_positive, false_negative) = metrics
 
     print(f"\nPrecision: {precision}")
     print(f"Recall: {recall}")

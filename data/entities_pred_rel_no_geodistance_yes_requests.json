@@ -30,7 +30,7 @@
     "entities": [
       {
         "text_label": "Louvres",
-        "Wikidata_ID": "Q2716584"
+        "Wikidata_ID": "Q908517"
       },
       {
         "text_label": "Paris",
@@ -43,7 +43,7 @@
     "entities": [
       {
         "text_label": "Yecla",
-        "Wikidata_ID": "Q931116"
+        "Wikidata_ID": "Q24012532"
       },
       {
         "text_label": "Valencia",
@@ -89,7 +89,7 @@
     "row": 9,
     "entities": [
       {
-        "text_label": "People's Republic of China",
+        "text_label": "China",
         "Wikidata_ID": "Q148"
       },
       {
@@ -227,8 +227,8 @@
         "Wikidata_ID": "Q2805"
       },
       {
-        "text_label": "Netherlands",
-        "Wikidata_ID": "Q55"
+        "text_label": "Holland",
+        "Wikidata_ID": "Q102911"
       },
       {
         "text_label": "Krefeld",
@@ -268,76 +268,7 @@
   },
   {
     "row": 29,
-    "entities": [
-      {
-        "text_label": "Constantinople",
-        "Wikidata_ID": "Q16869"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
-      },
-      {
-        "text_label": "Skordilo, Rethymno",
-        "Wikidata_ID": "Q21747300"
-      },
-      {
-        "text_label": "Sitia",
-        "Wikidata_ID": "Q985549"
-      },
-      {
-        "text_label": "Mylopotamos Municipality",
-        "Wikidata_ID": "Q2296581"
-      },
-      {
-        "text_label": "Rethymno",
-        "Wikidata_ID": "Q200908"
-      },
-      {
-        "text_label": "Kallergiana, Chania",
-        "Wikidata_ID": "Q21772704"
-      },
-      {
-        "text_label": "Kissamos",
-        "Wikidata_ID": "Q1021629"
-      },
-      {
-        "text_label": "Kastelli",
-        "Wikidata_ID": "Q845105"
-      },
-      {
-        "text_label": "Kallérgos",
-        "Wikidata_ID": "Q21747298"
-      },
-      {
-        "text_label": "Rethymno",
-        "Wikidata_ID": "Q200908"
-      },
-      {
-        "text_label": "House of Kallergis",
-        "Wikidata_ID": "Q111155162"
-      },
-      {
-        "text_label": "White Mountains",
-        "Wikidata_ID": "Q1556007"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
-      },
-      {
-        "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 30,
@@ -400,20 +331,7 @@
   },
   {
     "row": 40,
-    "entities": [
-      {
-        "text_label": "Paris",
-        "Wikidata_ID": "Q90"
-      },
-      {
-        "text_label": "Aubusson",
-        "Wikidata_ID": "Q217161"
-      },
-      {
-        "text_label": "Paris",
-        "Wikidata_ID": "Q90"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 41,
@@ -428,8 +346,8 @@
     "row": 42,
     "entities": [
       {
-        "text_label": "coat of arms of the Ottoman Empire",
-        "Wikidata_ID": "Q817316"
+        "text_label": "Ottoman Empire",
+        "Wikidata_ID": "Q12560"
       },
       {
         "text_label": "Crete",
@@ -804,7 +722,7 @@
     "entities": [
       {
         "text_label": "Venice",
-        "Wikidata_ID": "Q641"
+        "Wikidata_ID": "Q773853"
       },
       {
         "text_label": "England",
@@ -873,29 +791,11 @@
   },
   {
     "row": 92,
-    "entities": [
-      {
-        "text_label": "Greece",
-        "Wikidata_ID": "Q41"
-      },
-      {
-        "text_label": "Athens",
-        "Wikidata_ID": "Q1524"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 93,
-    "entities": [
-      {
-        "text_label": "Limoges",
-        "Wikidata_ID": "Q45656"
-      },
-      {
-        "text_label": "Limoges",
-        "Wikidata_ID": "Q45656"
-      }
-    ]
+    "entities": []
   },
   {
     "row": 94,
@@ -995,8 +895,8 @@
     "row": 103,
     "entities": [
       {
-        "text_label": "Iraq",
-        "Wikidata_ID": "Q796"
+        "text_label": "Kurdistan Region",
+        "Wikidata_ID": "Q205047"
       },
       {
         "text_label": "Middle East",
@@ -1201,7 +1101,7 @@
       },
       {
         "text_label": "Aragon",
-        "Wikidata_ID": "Q625115"
+        "Wikidata_ID": "Q4040"
       }
     ]
   },
@@ -1217,8 +1117,8 @@
         "Wikidata_ID": "Q3004"
       },
       {
-        "text_label": "Upper Bavarian Forest Nature Park",
-        "Wikidata_ID": "Q884758"
+        "text_label": "Upper Bavaria",
+        "Wikidata_ID": "Q10562"
       }
     ]
   },
@@ -1280,8 +1180,8 @@
         "Wikidata_ID": "Q406"
       },
       {
-        "text_label": "Peloponnese",
-        "Wikidata_ID": "Q78967"
+        "text_label": "Peloponnese Region",
+        "Wikidata_ID": "Q202484"
       },
       {
         "text_label": "Cyprus",
@@ -1484,8 +1384,8 @@
         "Wikidata_ID": "Q170295"
       },
       {
-        "text_label": "Italy",
-        "Wikidata_ID": "Q38"
+        "text_label": "Kingdom of Italy",
+        "Wikidata_ID": "Q172579"
       },
       {
         "text_label": "Rome",
@@ -1712,6 +1612,10 @@
   {
     "row": 179,
     "entities": [
+      {
+        "text_label": "Metropolis of Ioannina",
+        "Wikidata_ID": "Q16665890"
+      },
       {
         "text_label": "Ioannina",
         "Wikidata_ID": "Q183199"
@@ -1942,8 +1846,8 @@
         "Wikidata_ID": "Q985630"
       },
       {
-        "text_label": "Zagori Municipality",
-        "Wikidata_ID": "Q9386001"
+        "text_label": "Zagori",
+        "Wikidata_ID": "Q2712111"
       },
       {
         "text_label": "Ioannina",
