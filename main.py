@@ -16,6 +16,8 @@ from sentence_transformers import SentenceTransformer, util
 from SPARQLWrapper import SPARQLWrapper, JSON
 from geopy.distance import geodesic
 from pydantic import BaseModel
+from geoparser import Geoparser
+from rapidfuzz import process, fuzz
 import spacy
 import requests
 import time
@@ -250,6 +252,13 @@ def convert_to_vkt(coordinates):
 #        geojson.dump(feature_collection, f, ensure_ascii=False, indent=2)
 #    print(f"\n✅ GeoJSON saved in: {filename}")
 
+def find_similar_string(target, candidates, threshold=0.7):
+    result = process.extractOne(target, candidates, scorer=fuzz.token_sort_ratio)
+
+    if result and result[1] / 100 >= threshold:
+        return result[0]
+    return None
+
 def get_coordinates_from_wikidata(qid):
     query = f"""
     SELECT ?coord WHERE {{
@@ -268,8 +277,6 @@ def get_coordinates_from_wikidata(qid):
             lon, lat = float(parts[0]), float(parts[1])
             return lat, lon
     return None
-
-import requests
 
 def fallback_wikidata_search(entity_text, lang="en"):
     """
@@ -495,6 +502,81 @@ def get_wikipedia_article_from_geonames(geonames_iri):
 
     return None
 
+
+def get_wikidata_entity_from_geonames(geonames_iri):
+    rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
+    response = requests.get(rdf_url)
+    wikipedia_url = ''
+
+    if response.status_code == 200:
+        root = ET.fromstring(response.content)
+        ns = {
+            'gn': 'http://www.geonames.org/ontology#',
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        }
+
+        for wiki_elem in root.findall('.//gn:wikipediaArticle', ns):
+            url = wiki_elem.attrib.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+            if url and 'en.wikipedia.org' in url:
+                wikipedia_url = url
+                break
+
+    if wikipedia_url and 'en.wikipedia.org' in wikipedia_url:
+        parsed_url = urlparse(wikipedia_url)
+        title = unquote(parsed_url.path.split("/wiki/")[-1])
+
+        wiki_api_url = f"https://{parsed_url.hostname}/w/api.php"
+        params = {
+            "action": "query",
+            "titles": title,
+            "prop": "pageprops",
+            "format": "json"
+        }
+
+        headers = {
+            "User-Agent": "MyPythonScript/1.0 (claudio.demartino@isti.cnr.it)"
+        }
+
+        try:
+            response = requests.get(wiki_api_url, params=params, headers=headers)
+
+            if response.status_code == 429:
+                raise WikipediaRateLimitException("Rate limit exceeded (HTTP 429). Try again later.")
+
+            response.raise_for_status()
+            data = response.json()
+
+            if "error" in data:
+                if data["error"].get("code") == "ratelimited":
+                    raise WikipediaRateLimitException("Rate limit exceeded (API error 'ratelimited'). Try again later.")
+                else:
+                    raise Exception(f"API returned an error: {data['error']}")
+
+            pages = data.get("query", {}).get("pages", {})
+            for page in pages.values():
+                wikidata_id = page.get("pageprops", {}).get("wikibase_item")
+                if wikidata_id:
+                    wikidata_api_url = "https://www.wikidata.org/w/api.php"
+                    label_params = {
+                        "action": "wbgetentities",
+                        "ids": wikidata_id,
+                        "format": "json",
+                        "props": "labels",
+                        "languages": "en"
+                    }
+                    wd_response = requests.get(wikidata_api_url, params=label_params, headers=headers)
+                    wd_response.raise_for_status()
+                    wd_data = wd_response.json()
+
+                    label = wd_data.get("entities", {}).get(wikidata_id, {}).get("labels", {}).get("en", {}).get("value", "")
+                    return {"id": wikidata_id, "label": label}
+
+            return {}
+
+        except requests.RequestException as e:
+            raise Exception(f"HTTP request failed: {e}")
+
+
 def get_geonames_label(geonames_id):
     #rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
     rdf_url = f"https://www.geonames.org/{geonames_id}/about.rdf"
@@ -513,6 +595,7 @@ def get_geonames_label(geonames_id):
             return label_elem.text
 
     return None
+
 
 def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "en") -> dict:
     parsed_url = urlparse(wikipedia_url)
@@ -568,9 +651,6 @@ def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "
 
     except requests.RequestException as e:
         raise Exception(f"HTTP request failed: {e}")
-
-
-import requests
 
 
 def search_wikidata_entity(query, language='en', attempt=1):
@@ -1984,6 +2064,9 @@ async def analyze_goldstandard_spacy_refined(
         sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
         sparql.setReturnFormat(JSON)
 
+        tagger = SequenceTagger.load("ner")
+        splitter = SegtokSentenceSplitter()
+
         for i, event in enumerate(content):
 
             row = {
@@ -1993,6 +2076,20 @@ async def analyze_goldstandard_spacy_refined(
 
             doc, nlp = tokenize_text(event, lang="en")
             entities_spacy = extract_geo_entity(doc, event)
+
+            sentences = splitter.split(event)
+
+            tagger.predict(sentences)
+
+            entities = [item["text"] for item in entities_spacy]
+
+            for sentence in sentences:
+                for entity in sentence.get_spans('ner'):
+                    if entity.get_label("ner").value == "LOC" and entity.text not in entities:
+                        entities_spacy.append({
+                            "text": entity.text,
+                            "context": sentence.to_original_text()
+                        })
 
             all_coords = []
 
@@ -2037,6 +2134,163 @@ async def analyze_goldstandard_spacy_refined(
                             "Wikidata_ID": entity['id']
                         }
                         row["entities"].append(feature)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        filename = f"entities{uuid4().hex}.json"
+        path = f"/tmp/{filename}"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(features, f, ensure_ascii=False, indent=2)
+
+        return FileResponse(path, media_type="application/json", filename=filename)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-geoparser")
+async def analyze_goldstandard_geoparser(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+
+        geoparser = Geoparser(
+            spacy_model="en_core_web_trf",
+            transformer_model="dguzh/geo-all-MiniLM-L6-v2", # dguzh/geo-all-distilroberta-v1
+            gazetteer="geonames"
+        )
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            docs = geoparser.parse([event])
+            doc, nlp = tokenize_text(event, lang="en")
+            entities_spacy = extract_geo_entity(doc, event)
+
+            all_coords = []
+
+            for ent in entities_spacy:
+                cands = query_candidates(sparql, ent['text'])
+                if cands:
+                    all_coords += [c["coord"] for c in cands if c["coord"]]
+
+            print("\nEntities found:")
+            for doc in docs:
+                for toponym in doc.toponyms:
+                    print(f"- Toponym: {toponym.text}")
+                    location = toponym.location
+
+                    entities_spacy_text = [item['text'] for item in entities_spacy if item['text']]
+
+                    match = find_similar_string(toponym.text, entities_spacy_text, threshold=0.7)
+
+                    if location:
+                        geonames_id = location['geonameid']
+                        iri = 'https://www.geonames.org/' + geonames_id
+                        wikidata_entity = get_wikidata_entity_from_geonames(iri)
+
+                        if wikidata_entity:
+                            if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
+                                feature = {
+                                    "text_label": wikidata_entity['label'],
+                                    "Wikidata_ID": wikidata_entity['id']
+                                }
+                                row["entities"].append(feature)
+                        else:
+                            print(f"Entity {location['name']} could not be resolved. Trying with spacy...")
+
+                            if all_coords and match:
+
+                                label = match
+                                context = event
+                                candidates = query_candidates(sparql, label)
+                                if candidates:
+                                    best = choose_best(model, candidates, context, all_coords)
+
+                                    if best:
+                                        feature = {
+                                            "text_label": label,
+                                            "Wikidata_ID": best['qid']
+                                        }
+                                        row["entities"].append(feature)
+                                else:
+                                    entity = search_wikidata_entity(label)
+                                    if entity and is_geographic_entity(entity['id']):
+                                        feature = {
+                                            "text_label": entity['label'],
+                                            "Wikidata_ID": entity['id']
+                                        }
+                                        row["entities"].append(feature)
+
+                            else:
+                                entity = search_wikidata_entity(match)
+                                if entity and is_geographic_entity(entity['id']):
+                                    feature = {
+                                        "text_label": entity['label'],
+                                        "Wikidata_ID": entity['id']
+                                    }
+                                    row["entities"].append(feature)
+
+                    else:
+                        print(f"Location could not be resolved. Trying with spacy...")
+
+                        if all_coords and match:
+
+                            label = match
+                            context = event
+                            candidates = query_candidates(sparql, label)
+                            if candidates:
+                                best = choose_best(model, candidates, context, all_coords)
+
+                                if best:
+                                    feature = {
+                                        "text_label": label,
+                                        "Wikidata_ID": best['qid']
+                                    }
+                                    row["entities"].append(feature)
+                            else:
+                                entity = search_wikidata_entity(label)
+                                if entity and is_geographic_entity(entity['id']):
+                                    feature = {
+                                        "text_label": entity['label'],
+                                        "Wikidata_ID": entity['id']
+                                    }
+                                    row["entities"].append(feature)
+
+                        else:
+                            entity = search_wikidata_entity(match)
+                            if entity and is_geographic_entity(entity['id']):
+                                feature = {
+                                    "text_label": entity['label'],
+                                    "Wikidata_ID": entity['id']
+                                }
+                                row["entities"].append(feature)
 
             print(f"\nRow: {row}\n")
             features.append(row)
