@@ -29,6 +29,7 @@ import logging
 import sys
 import traceback
 import tempfile
+import zipfile
 
 # ======= Logger =======
 
@@ -166,18 +167,38 @@ def call_wikifier(text: str, lang: str = "en", threshold: float = 0.8):
     response.raise_for_status()
     return response.json().get("annotations", [])
 
-def is_geographic_entity(qid):
-    query = f"""
-    ASK {{
-      wd:{qid} wdt:P31 ?type .
-      ?type wdt:P279* wd:Q618123 .
-    }}
-    """
-    url = "https://query.wikidata.org/sparql"
-    headers = {"Accept": "application/sparql-results+json"}
-    response = requests.get(url, params={"query": query}, headers=headers)
-    response.raise_for_status()
-    return response.json()['boolean']
+def is_geographic_entity(qid, attempt=1):
+    try:
+        query = f"""
+        ASK {{
+          wd:{qid} wdt:P31 ?type .
+          ?type wdt:P279* wd:Q618123 .
+        }}
+        """
+        url = "https://query.wikidata.org/sparql"
+        headers = {"Accept": "application/sparql-results+json"}
+        response = requests.get(url, params={"query": query}, headers=headers)
+        response.raise_for_status()
+        return response.json()['boolean']
+    except urllib.error.HTTPError as e:
+        if e.code == 504:
+            print(f"[WIKIDATA] Timeout for entity '{qid}'")
+        elif e.code == 429:
+            attempt += 1
+            wait = 2
+            if attempt == 2:
+                wait = 5
+            elif attempt == 3:
+                wait = 10
+            if attempt <= 3:
+                print(f"[WIKIDATA] Too many requests for entity '{qid}'. Retrying attempt {attempt}...")
+                time.sleep(wait)
+                is_geographic_entity(qid, attempt)
+            else:
+                print(f"[WIKIDATA] Too many requests for entity '{qid}'. Skipping...")
+        else:
+            print(f"[WIKIDATA] Error: {e} for entity '{qid}'")
+            return []
 
 def get_osm_relation_id(qid):
     query = f"""
@@ -346,12 +367,12 @@ def segment_by_language(text, nlp):
 
     return segments
 
-def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry):
+def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry, allow_duplicates):
     try:
         if not only_geometry:
             if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
                 return
-        else:
+        elif allow_duplicates:
             if qid in processed_qids:
                 print(f"\n⚠️ Skipping {qid}, already processed.")
                 return
@@ -391,7 +412,7 @@ def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geo
             "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
         })
 
-        if not only_geometry:
+        if not only_geometry and not allow_duplicates:
             processed_qids.add(qid)
 
         time.sleep(4)  # Avoid rate limit
@@ -403,7 +424,7 @@ def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geo
         print(f"❌ Error with {label}: {e}")
         print("Retrying...")
         time.sleep(10)
-        retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry)
+        retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry, allow_duplicates)
 
 def process_annotation(annotation, processed_qids, entities):
     try:
@@ -416,7 +437,7 @@ def process_annotation(annotation, processed_qids, entities):
     if qid in processed_qids:
         return
 
-    retrieve_geometry(annotation, label, qid, entities, processed_qids, False)
+    retrieve_geometry(annotation, label, qid, entities, processed_qids, False, False)
 
 def analyze(annotation_text, entities, processed_qids):
     for ann in annotation_text:
@@ -819,6 +840,74 @@ def query_candidates(sparql, label, lang="en", attempt=1):
         return []
 
 
+def do_geosparql(label, qid, entities, fts):
+    geometry = retrieve_geometry(None, label, qid,
+                                 entities, set(), True,
+                                 True)
+
+    if geometry:
+        for g in geometry:
+            if g["vkt"]:
+                feature_id = f"wd:{g['qid']}"
+                geometry_obj = {
+                    "@id": f"{feature_id}-geom",
+                    "@type": "Geometry",
+                    "asWKT": f"SRID=4326;{g['vkt']}"
+                }
+                feature_geo = {
+                    "@id": feature_id,
+                    "@type": "Feature",
+                    "label": g["label"],
+                    "description": g["description"],
+                    "qid": g["qid"],
+                    "wikidata": g["wikidata_url"],
+                    "osm_id": g["osm_id"],
+                    "hasGeometry": geometry_obj
+                }
+
+                fts.append(feature_geo)
+
+
+def download_zip(fts, geo_doc):
+    filename = f"entities{uuid4().hex}.json"  # path = f"/tmp/{filename}"
+    filename2 = f"geosparql{uuid4().hex}.json"
+    tmpdir = tempfile.gettempdir()
+    path = os.path.join(tmpdir, filename)
+    path2 = os.path.join(tmpdir, filename2)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(fts, f, ensure_ascii=False, indent=2)
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(geo_doc, f, ensure_ascii=False, indent=2)
+
+    zip_filename = f"export_{uuid4().hex}.zip"
+    zip_path = os.path.join(tmpdir, zip_filename)
+
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        zipf.write(path, arcname="entities.json")
+        zipf.write(path2, arcname="geosparql.json")
+
+    return FileResponse(zip_path, media_type="application/zip", filename="files.zip")
+
+
+def download_features(fts):
+    filename = f"entities{uuid4().hex}.json"  # path = f"/tmp/{filename}"
+    tmpdir = tempfile.gettempdir()
+    path = os.path.join(tmpdir, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(fts, f, ensure_ascii=False, indent=2)
+
+    return FileResponse(path, media_type="application/json", filename=filename)
+
+
+def append_feature(row, label, qid):
+    feature = {
+        "text_label": label,
+        "Wikidata_ID": qid
+    }
+    row["entities"].append(feature)
+
+
 # ======= FastAPI endpoints =======
 
 @app.post("/geosparql")
@@ -1073,8 +1162,6 @@ async def analyze_geonames_csv(
                 logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
                 continue    # skip IRI already processed
 
-            # TODO
-
             sparql_query = f"""
                         SELECT ?item ?itemLabel WHERE {{
                           ?item wdt:P1566 "{geonames_id}".
@@ -1104,7 +1191,7 @@ async def analyze_geonames_csv(
                             logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
                             continue
 
-                        geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+                        geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True, False)
 
                         if geometry:
                             for g in geometry:
@@ -1170,7 +1257,7 @@ async def analyze_geonames_csv(
                                     logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
                                     continue
 
-                                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+                                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True, False)
 
                                 if geometry:
                                     for g in geometry:
@@ -1259,7 +1346,7 @@ async def analyze_geonames_csv(
                     logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
                     continue
 
-                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True)
+                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True, False)
 
                 if geometry:
                     for g in geometry:
@@ -1322,7 +1409,7 @@ async def analyze_goldstandard(
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process. Old version of the algorithm.
     """
     try:
 
@@ -1382,18 +1469,19 @@ async def analyze_goldstandard(
 @app.post("/test-flair")
 async def analyze_goldstandard_flair(
     file: UploadFile = File(..., description="XML file containing events"),
-    #lang: str = Query("en", description="Analysis language"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using Flair's NER + custom entity linker.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
@@ -1437,6 +1525,8 @@ async def analyze_goldstandard_flair(
 
             for ent in entities_flair:
 
+                entities = []
+
                 if all_coords:
                     label = ent['text']
                     context = ent['context']
@@ -1445,28 +1535,29 @@ async def analyze_goldstandard_flair(
                         best = choose_best(model, candidates, context, all_coords)
 
                         if best:
-                            feature = {
-                                "text_label": label,
-                                "Wikidata_ID": best['qid']
-                            }
-                            row["entities"].append(feature)
+
+                            append_feature(row, label, best['qid'])
+
+                            if download_geosparql:
+                                do_geosparql(label, best['qid'], entities, features_geosparql)
+
                     else:
                         entity = search_wikidata_entity(ent['text'])
                         if entity:
-                            feature = {
-                                "text_label": entity['label'],
-                                "Wikidata_ID": entity['id']
-                            }
-                            row["entities"].append(feature)
+
+                            append_feature(row, entity['label'], entity['id'])
+
+                            if download_geosparql:
+                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
 
                 else:
                     entity = search_wikidata_entity(ent['text'])
                     if entity:
-                        feature = {
-                            "text_label": entity['label'],
-                            "Wikidata_ID": entity['id']
-                        }
-                        row["entities"].append(feature)
+
+                        append_feature(row, entity['label'], entity['id'])
+
+                        if download_geosparql:
+                            do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -1475,12 +1566,17 @@ async def analyze_goldstandard_flair(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -1490,19 +1586,21 @@ async def analyze_goldstandard_flair(
 
 
 @app.post("/test-flair-custom-linker")
-async def analyze_goldstandard_flair_custom_linker(
+async def analyze_goldstandard_flair_alternative(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using an alternative version of Flair's NER implementation + custom entity linker.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         tagger = SequenceTagger.load("ner")
 
@@ -1538,13 +1636,14 @@ async def analyze_goldstandard_flair_custom_linker(
             for entity in entities_flair:
 
                 ent = search_wikidata_entity(entity.text)
+                entities = []
 
                 if ent:
-                    feature = {
-                        "text_label": ent.get("label", ""),
-                        "Wikidata_ID": ent.get("id", "")
-                    }
-                    row["entities"].append(feature)
+
+                    append_feature(row, ent.get("label", ""), ent.get("id", ""))
+
+                    if download_geosparql:
+                        do_geosparql(ent.get("label", ""), ent.get("id", ""), entities, features_geosparql)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -1553,12 +1652,17 @@ async def analyze_goldstandard_flair_custom_linker(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -1570,17 +1674,19 @@ async def analyze_goldstandard_flair_custom_linker(
 @app.post("/test-wikifier")
 async def analyze_goldstandard_wikifier(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using Wikifier.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         for i, event in enumerate(content):
 
@@ -1592,12 +1698,26 @@ async def analyze_goldstandard_wikifier(
             result = call_wikifier(event)
             print(f"\nResult: {result}")
             for ann in result:
-                if any("location" in t.lower() for t in ann.get("types", [])):
-                    feature = {
-                        "text_label": ann["title"],
-                        "Wikidata_ID": ann.get("wikiDataId")
-                    }
-                    row["entities"].append(feature)
+
+                while True:
+
+                    try:
+
+                        entities = []
+
+                        if any("location" in t.lower() for t in ann.get("types", [])):
+
+                            append_feature(row, ann['title'], ann.get('wikiDataId'))
+
+                            if download_geosparql:
+                                do_geosparql(ann['title'], ann.get('wikiDataId'), entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{ann['title']}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -1606,12 +1726,17 @@ async def analyze_goldstandard_wikifier(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -1623,17 +1748,19 @@ async def analyze_goldstandard_wikifier(
 @app.post("/test-flair-wikifier")
 async def analyze_goldstandard_flair_wikifier(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using Wikifier and Flair+custom entity linker where the former fails.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         tagger = SequenceTagger.load("ner")
 
@@ -1661,11 +1788,24 @@ async def analyze_goldstandard_flair_wikifier(
             filtered = filter_by_mentions(wikifier_result, entities_flair)
 
             for entity in filtered:
-                feature = {
-                    "text_label": entity["title"],
-                    "Wikidata_ID": entity["wikiDataId"]
-                }
-                row["entities"].append(feature)
+
+                while True:
+
+                    try:
+
+                        entities = []
+
+                        append_feature(row, entity['title'], entity['wikiDataId'])
+
+                        if download_geosparql:
+                            do_geosparql(entity['title'], entity['wikiDataId'], entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{entity['title']}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -1674,12 +1814,17 @@ async def analyze_goldstandard_flair_wikifier(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -1691,17 +1836,170 @@ async def analyze_goldstandard_flair_wikifier(
 @app.post("/test-rel")
 async def analyze_goldstandard_rel(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using REL (Radboud Entity Linker) + custom entity linker.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
+
+        api_url = "https://rel.cs.ru.nl/api"
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            entities_rel = []
+
+            all_coords = []
+
+            rel_error = False
+
+            try:
+                response = requests.post(
+                    api_url,
+                    json={"text": event, "spans": []},
+                    headers={"Connection": "close"},
+                    timeout=60
+                )
+                response.raise_for_status()
+                el_result = response.json()
+
+            except requests.exceptions.RequestException as e:
+                print(f"[Requests Error] Row {i + 1}: failed request - {e}")
+                el_result = []
+                rel_error = True
+
+            except json.JSONDecodeError as e:
+                print(f"[JSON Error] Row {i + 1}: the answer is not a valid JSON - {e}")
+                el_result = []
+                rel_error = True
+
+            if not rel_error:
+
+                print(f"\nRow: {i+1}, entities found by REL: {el_result}")
+
+                for entity in el_result:
+
+                    if entity[-1] == "LOC":
+                        entities_rel.append({
+                            "text": entity[3],
+                            "context": event
+                        })
+
+            print("Entities found:")
+            for ent in entities_rel:
+                print(ent['text'])
+
+            for ent in entities_rel:
+                cands = query_candidates(sparql, ent['text'])
+                if cands:
+                    all_coords += [c["coord"] for c in cands if c["coord"]]
+
+            for ent in entities_rel:
+
+                while True:
+
+                    try:
+
+                        entities = []
+
+                        if all_coords:
+                            label = ent['text']
+                            context = ent['context']
+                            candidates = query_candidates(sparql, label)
+                            if candidates:
+                                best = choose_best(model, candidates, context, all_coords)
+
+                                if best:
+
+                                    append_feature(row, label, best['qid'])
+
+                                    if download_geosparql:
+                                        do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                            else:
+                                entity = search_wikidata_entity(ent['text'])
+                                if entity:
+
+                                    append_feature(row, entity['label'], entity['id'])
+
+                                    if download_geosparql:
+                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        else:
+                            entity = search_wikidata_entity(ent['text'])
+                            if entity:
+
+                                append_feature(row, entity['label'], entity['id'])
+
+                                if download_geosparql:
+                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
+                            time.sleep(5)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        if download_geosparql:
+
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-rel-flair")
+async def analyze_goldstandard_rel_flair(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process using REL (Radboud Entity Linker) + Flair where the former fails + custom entity linker.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+        features_geosparql = []
 
         api_url = "https://rel.cs.ru.nl/api"
 
@@ -1783,36 +2081,50 @@ async def analyze_goldstandard_rel(
 
             for ent in entities_rel:
 
-                if all_coords:
-                    label = ent['text']
-                    context = ent['context']
-                    candidates = query_candidates(sparql, label)
-                    if candidates:
-                        best = choose_best(model, candidates, context, all_coords)
+                while True:
 
-                        if best:
-                            feature = {
-                                "text_label": label,
-                                "Wikidata_ID": best['qid']
-                            }
-                            row["entities"].append(feature)
-                    else:
-                        entity = search_wikidata_entity(ent['text'])
-                        if entity:
-                            feature = {
-                                "text_label": entity['label'],
-                                "Wikidata_ID": entity['id']
-                            }
-                            row["entities"].append(feature)
+                    try:
 
-                else:
-                    entity = search_wikidata_entity(ent['text'])
-                    if entity:
-                        feature = {
-                            "text_label": entity['label'],
-                            "Wikidata_ID": entity['id']
-                        }
-                        row["entities"].append(feature)
+                        entities = []
+
+                        if all_coords:
+                            label = ent['text']
+                            context = ent['context']
+                            candidates = query_candidates(sparql, label)
+                            if candidates:
+                                best = choose_best(model, candidates, context, all_coords)
+
+                                if best:
+
+                                    append_feature(row, label, best['qid'])
+
+                                    if download_geosparql:
+                                        do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                            else:
+                                entity = search_wikidata_entity(ent['text'])
+                                if entity:
+
+                                    append_feature(row, entity['label'], entity['id'])
+
+                                    if download_geosparql:
+                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        else:
+                            entity = search_wikidata_entity(ent['text'])
+                            if entity:
+
+                                append_feature(row, entity['label'], entity['id'])
+
+                                if download_geosparql:
+                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -1821,12 +2133,17 @@ async def analyze_goldstandard_rel(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -1838,18 +2155,19 @@ async def analyze_goldstandard_rel(
 @app.post("/test-spacy")
 async def analyze_goldstandard_spacy(
     file: UploadFile = File(..., description="XML file containing events"),
-    #lang: str = Query("en", description="Analysis language"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using spaCy's NER + custom entity linker.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
@@ -1880,36 +2198,50 @@ async def analyze_goldstandard_spacy(
 
             for ent in entities_spacy:
 
-                if all_coords:
-                    label = ent['text']
-                    context = ent['context']
-                    candidates = query_candidates(sparql, label)
-                    if candidates:
-                        best = choose_best(model, candidates, context, all_coords)
+                while True:
 
-                        if best:
-                            feature = {
-                                "text_label": label,
-                                "Wikidata_ID": best['qid']
-                            }
-                            row["entities"].append(feature)
-                    else:
-                        entity = search_wikidata_entity(ent['text'])
-                        if entity:
-                            feature = {
-                                "text_label": entity['label'],
-                                "Wikidata_ID": entity['id']
-                            }
-                            row["entities"].append(feature)
+                    try:
 
-                else:
-                    entity = search_wikidata_entity(ent['text'])
-                    if entity:
-                        feature = {
-                            "text_label": entity['label'],
-                            "Wikidata_ID": entity['id']
-                        }
-                        row["entities"].append(feature)
+                        entities = []
+
+                        if all_coords:
+                            label = ent['text']
+                            context = ent['context']
+                            candidates = query_candidates(sparql, label)
+                            if candidates:
+                                best = choose_best(model, candidates, context, all_coords)
+
+                                if best:
+
+                                    append_feature(row, label, best['qid'])
+
+                                    if download_geosparql:
+                                        do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                            else:
+                                entity = search_wikidata_entity(ent['text'])
+                                if entity:
+
+                                    append_feature(row, entity['label'], entity['id'])
+
+                                    if download_geosparql:
+                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        else:
+                            entity = search_wikidata_entity(ent['text'])
+                            if entity:
+
+                                append_feature(row, entity['label'], entity['id'])
+
+                                if download_geosparql:
+                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -1918,12 +2250,17 @@ async def analyze_goldstandard_spacy(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -1935,17 +2272,19 @@ async def analyze_goldstandard_spacy(
 @app.post("/test-spacy-entity-linker")
 async def analyze_goldstandard_spacy_entity_linker(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using an alternative version of spaCy's NER implementation + custom entity linker.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
@@ -1992,36 +2331,53 @@ async def analyze_goldstandard_spacy_entity_linker(
 
             for ent in entities_spacy:
 
-                if all_coords:
-                    label = ent['text']
-                    context = ent['context']
-                    candidates = query_candidates(sparql, label)
-                    if candidates:
-                        best = choose_best(model, candidates, context, all_coords)
+                while True:
 
-                        if best:
-                            feature = {
-                                "text_label": label,
-                                "Wikidata_ID": best['qid']
-                            }
-                            row["entities"].append(feature)
-                    else:
-                        entity = search_wikidata_entity(ent['text'])
-                        if entity:
-                            feature = {
-                                "text_label": entity['label'],
-                                "Wikidata_ID": entity['id']
-                            }
-                            row["entities"].append(feature)
+                    try:
 
-                else:
-                    entity = search_wikidata_entity(ent['text'])
-                    if entity:
-                        feature = {
-                            "text_label": entity['label'],
-                            "Wikidata_ID": entity['id']
-                        }
-                        row["entities"].append(feature)
+                        entities = []
+
+                        if all_coords:
+                            label = ent['text']
+                            context = ent['context']
+                            candidates = query_candidates(sparql, label)
+                            if candidates:
+                                best = choose_best(model, candidates, context, all_coords)
+
+                                if best:
+
+                                    append_feature(row, label, best['qid'])
+
+                                    if download_geosparql:
+
+                                        do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                            else:
+                                entity = search_wikidata_entity(ent['text'])
+                                if entity:
+
+                                    append_feature(row, entity['label'], entity['id'])
+
+                                    if download_geosparql:
+
+                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        else:
+                            entity = search_wikidata_entity(ent['text'])
+                            if entity:
+
+                                append_feature(row, entity['label'], entity['id'])
+
+                                if download_geosparql:
+
+                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -2030,12 +2386,17 @@ async def analyze_goldstandard_spacy_entity_linker(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -2044,20 +2405,22 @@ async def analyze_goldstandard_spacy_entity_linker(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy-refined")
-async def analyze_goldstandard_spacy_refined(
+@app.post("/test-spacy385-flair")
+async def analyze_goldstandard_spacy_flair(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using spaCy's NER + Flair's NER + custom entity linker.
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
 
         model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
@@ -2081,11 +2444,11 @@ async def analyze_goldstandard_spacy_refined(
 
             tagger.predict(sentences)
 
-            entities = [item["text"] for item in entities_spacy]
+            text_entities = [item["text"] for item in entities_spacy]
 
             for sentence in sentences:
                 for entity in sentence.get_spans('ner'):
-                    if entity.get_label("ner").value == "LOC" and entity.text not in entities:
+                    if entity.get_label("ner").value == "LOC" and entity.text not in text_entities:
                         entities_spacy.append({
                             "text": entity.text,
                             "context": sentence.to_original_text()
@@ -2104,36 +2467,55 @@ async def analyze_goldstandard_spacy_refined(
 
             for ent in entities_spacy:
 
-                if all_coords:
-                    label = ent['text']
-                    context = ent['context']
-                    candidates = query_candidates(sparql, label)
-                    if candidates:
-                        best = choose_best(model, candidates, context, all_coords)
+                while True:
 
-                        if best:
-                            feature = {
-                                "text_label": label,
-                                "Wikidata_ID": best['qid']
-                            }
-                            row["entities"].append(feature)
-                    else:
-                        entity = search_wikidata_entity(ent['text'])
-                        if entity and is_geographic_entity(entity['id']):
-                            feature = {
-                                "text_label": entity['label'],
-                                "Wikidata_ID": entity['id']
-                            }
-                            row["entities"].append(feature)
+                    try:
 
-                else:
-                    entity = search_wikidata_entity(ent['text'])
-                    if entity and is_geographic_entity(entity['id']):
-                        feature = {
-                            "text_label": entity['label'],
-                            "Wikidata_ID": entity['id']
-                        }
-                        row["entities"].append(feature)
+                        entities = []
+
+                        if all_coords:
+                            label = ent['text']
+                            context = ent['context']
+                            candidates = query_candidates(sparql, label)
+                            if candidates:
+                                best = choose_best(model, candidates, context, all_coords)
+
+                                if best:
+
+                                    append_feature(row, label, best['qid'])
+
+                                    if download_geosparql:
+
+                                        do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                            else:
+                                entity = search_wikidata_entity(ent['text'])
+                                if entity and is_geographic_entity(entity['id']):
+
+                                    append_feature(row, entity['label'], entity['id'])
+
+                                    if download_geosparql:
+
+                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        else:
+                            entity = search_wikidata_entity(ent['text'])
+                            if entity and is_geographic_entity(entity['id']):
+
+                                append_feature(row, entity['label'], entity['id'])
+
+                                if download_geosparql:
+
+                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                        break
+
+                    except urllib.error.HTTPError as e:
+
+                        if e.code == 429:
+                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
+
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -2142,12 +2524,17 @@ async def analyze_goldstandard_spacy_refined(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
@@ -2156,20 +2543,216 @@ async def analyze_goldstandard_spacy_refined(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-geoparser")
-async def analyze_goldstandard_geoparser(
+@app.post("/test-geoparser-wikidata")
+async def analyze_goldstandard_geoparser_wikidata(
     file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
     Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process.
+    Extract the geographic entities and apply the disambiguation process using Geoparser's NER + custom entity linker even when the former fails (giving the toponym.text as input)
     """
     try:
 
         content = await parse_excel_xml(file)
 
         features = []
+        features_geosparql = []
+
+        geoparser = Geoparser(
+            spacy_model="en_core_web_trf",
+            transformer_model="dguzh/geo-all-MiniLM-L6-v2", # dguzh/geo-all-distilroberta-v1
+            gazetteer="geonames"
+        )
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            docs = geoparser.parse([event])
+
+            all_coords = []
+
+            for doc in docs:
+                for toponym in doc.toponyms:
+
+                    while True:
+
+                        try:
+                            cands = query_candidates(sparql, toponym.text)
+                            if cands:
+                                all_coords += [c["coord"] for c in cands if c["coord"]]
+
+                            break
+
+                        except urllib.error.HTTPError as e:
+                            if e.code == 429:
+                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
+                                time.sleep(5)
+
+            print("\nEntities found:")
+            for doc in docs:
+                for toponym in doc.toponyms:
+
+                    while True:
+
+                        try:
+
+                            entities = []
+
+                            print(f"- Toponym: {toponym.text}")
+                            location = toponym.location
+
+                            if location:
+                                geonames_id = location['geonameid']
+                                iri = 'https://www.geonames.org/' + geonames_id
+                                wikidata_entity = get_wikidata_entity_from_geonames(iri)
+
+                                if wikidata_entity:
+                                    if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
+
+                                        append_feature(row, wikidata_entity['label'], wikidata_entity['id'])
+
+                                        if download_geosparql:
+
+                                            do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
+
+                                else:
+                                    print(f"Entity {location['name']} could not be resolved. Trying with Wikidata method...")
+
+                                    if all_coords:
+
+                                        label = toponym.text
+                                        context = event
+                                        candidates = query_candidates(sparql, label)
+                                        if candidates:
+                                            best = choose_best(model, candidates, context, all_coords)
+
+                                            if best:
+
+                                                append_feature(row, label, best['qid'])
+
+                                                if download_geosparql:
+
+                                                    do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                                        else:
+                                            entity = search_wikidata_entity(label)
+                                            if entity and is_geographic_entity(entity['id']):
+
+                                                append_feature(row, entity['label'], entity['id'])
+
+                                                if download_geosparql:
+
+                                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                                    else:
+                                        entity = search_wikidata_entity(toponym.text)
+                                        if entity and is_geographic_entity(entity['id']):
+
+                                            append_feature(row, entity['label'], entity['id'])
+
+                                            if download_geosparql:
+
+                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                            else:
+                                print(f"Location could not be resolved. Trying with Wikidata method...")
+
+                                if all_coords:
+
+                                    label = toponym.text
+                                    context = event
+                                    candidates = query_candidates(sparql, label)
+                                    if candidates:
+                                        best = choose_best(model, candidates, context, all_coords)
+
+                                        if best:
+
+                                            append_feature(row, label, best['qid'])
+
+                                            if download_geosparql:
+
+                                                do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                                    else:
+                                        entity = search_wikidata_entity(label)
+                                        if entity and is_geographic_entity(entity['id']):
+
+                                            append_feature(row, entity['label'], entity['id'])
+
+                                            if download_geosparql:
+
+                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                                else:
+                                    entity = search_wikidata_entity(toponym.text)
+                                    if entity and is_geographic_entity(entity['id']):
+
+                                        append_feature(row, entity['label'], entity['id'])
+
+                                        if download_geosparql:
+
+                                            do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                            break
+
+                        except urllib.error.HTTPError as e:
+                            if e.code == 429:
+                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
+                                time.sleep(5)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        if download_geosparql:
+
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-geoparser-spacy")
+async def analyze_goldstandard_geoparser_spacy(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process using Geoparser's NER + spaCy's NER + custom entity linker.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+        features_geosparql = []
 
         geoparser = Geoparser(
             spacy_model="en_core_web_trf",
@@ -2203,94 +2786,118 @@ async def analyze_goldstandard_geoparser(
             print("\nEntities found:")
             for doc in docs:
                 for toponym in doc.toponyms:
-                    print(f"- Toponym: {toponym.text}")
-                    location = toponym.location
 
-                    entities_spacy_text = [item['text'] for item in entities_spacy if item['text']]
+                    while True:
 
-                    match = find_similar_string(toponym.text, entities_spacy_text, threshold=0.7)
+                        try:
 
-                    if location:
-                        geonames_id = location['geonameid']
-                        iri = 'https://www.geonames.org/' + geonames_id
-                        wikidata_entity = get_wikidata_entity_from_geonames(iri)
+                            entities = []
 
-                        if wikidata_entity:
-                            if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
-                                feature = {
-                                    "text_label": wikidata_entity['label'],
-                                    "Wikidata_ID": wikidata_entity['id']
-                                }
-                                row["entities"].append(feature)
-                        else:
-                            print(f"Entity {location['name']} could not be resolved. Trying with spacy...")
+                            print(f"- Toponym: {toponym.text}")
+                            location = toponym.location
 
-                            if all_coords and match:
+                            entities_spacy_text = [item['text'] for item in entities_spacy if item['text']]
 
-                                label = match
-                                context = event
-                                candidates = query_candidates(sparql, label)
-                                if candidates:
-                                    best = choose_best(model, candidates, context, all_coords)
+                            match = find_similar_string(toponym.text, entities_spacy_text, threshold=0.7)
 
-                                    if best:
-                                        feature = {
-                                            "text_label": label,
-                                            "Wikidata_ID": best['qid']
-                                        }
-                                        row["entities"].append(feature)
+                            if location:
+                                geonames_id = location['geonameid']
+                                iri = 'https://www.geonames.org/' + geonames_id
+                                wikidata_entity = get_wikidata_entity_from_geonames(iri)
+
+                                if wikidata_entity:
+                                    if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
+
+                                        append_feature(row, wikidata_entity['label'], wikidata_entity['id'])
+
+                                        if download_geosparql:
+
+                                            do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
+
                                 else:
-                                    entity = search_wikidata_entity(label)
+                                    print(f"Entity {location['name']} could not be resolved. Trying with spacy...")
+
+                                    if all_coords and match:
+
+                                        label = match
+                                        context = event
+                                        candidates = query_candidates(sparql, label)
+                                        if candidates:
+                                            best = choose_best(model, candidates, context, all_coords)
+
+                                            if best:
+
+                                                append_feature(row, label, best['qid'])
+
+                                                if download_geosparql:
+
+                                                    do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                                        else:
+                                            entity = search_wikidata_entity(label)
+                                            if entity and is_geographic_entity(entity['id']):
+
+                                                append_feature(row, entity['label'], entity['id'])
+
+                                                if download_geosparql:
+
+                                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                                    else:
+                                        entity = search_wikidata_entity(match)
+                                        if entity and is_geographic_entity(entity['id']):
+
+                                            append_feature(row, entity['label'], entity['id'])
+
+                                            if download_geosparql:
+
+                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                            else:
+                                print(f"Location could not be resolved. Trying with spacy...")
+
+                                if all_coords and match:
+
+                                    label = match
+                                    context = event
+                                    candidates = query_candidates(sparql, label)
+                                    if candidates:
+                                        best = choose_best(model, candidates, context, all_coords)
+
+                                        if best:
+
+                                            append_feature(row, label, best['qid'])
+
+                                            if download_geosparql:
+
+                                                do_geosparql(label, best['qid'], entities, features_geosparql)
+
+                                    else:
+                                        entity = search_wikidata_entity(label)
+                                        if entity and is_geographic_entity(entity['id']):
+
+                                            append_feature(row, entity['label'], entity['id'])
+
+                                            if download_geosparql:
+
+                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
+
+                                else:
+                                    entity = search_wikidata_entity(match)
                                     if entity and is_geographic_entity(entity['id']):
-                                        feature = {
-                                            "text_label": entity['label'],
-                                            "Wikidata_ID": entity['id']
-                                        }
-                                        row["entities"].append(feature)
 
-                            else:
-                                entity = search_wikidata_entity(match)
-                                if entity and is_geographic_entity(entity['id']):
-                                    feature = {
-                                        "text_label": entity['label'],
-                                        "Wikidata_ID": entity['id']
-                                    }
-                                    row["entities"].append(feature)
+                                        append_feature(row, entity['label'], entity['id'])
 
-                    else:
-                        print(f"Location could not be resolved. Trying with spacy...")
+                                        if download_geosparql:
 
-                        if all_coords and match:
+                                            do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
 
-                            label = match
-                            context = event
-                            candidates = query_candidates(sparql, label)
-                            if candidates:
-                                best = choose_best(model, candidates, context, all_coords)
+                            break
 
-                                if best:
-                                    feature = {
-                                        "text_label": label,
-                                        "Wikidata_ID": best['qid']
-                                    }
-                                    row["entities"].append(feature)
-                            else:
-                                entity = search_wikidata_entity(label)
-                                if entity and is_geographic_entity(entity['id']):
-                                    feature = {
-                                        "text_label": entity['label'],
-                                        "Wikidata_ID": entity['id']
-                                    }
-                                    row["entities"].append(feature)
-
-                        else:
-                            entity = search_wikidata_entity(match)
-                            if entity and is_geographic_entity(entity['id']):
-                                feature = {
-                                    "text_label": entity['label'],
-                                    "Wikidata_ID": entity['id']
-                                }
-                                row["entities"].append(feature)
+                        except urllib.error.HTTPError as e:
+                            if e.code == 429:
+                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
+                                time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -2299,12 +2906,120 @@ async def analyze_goldstandard_geoparser(
             return JSONResponse(content=features,
                                 media_type="application/json")
 
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
+        if download_geosparql:
 
-        return FileResponse(path, media_type="application/json", filename=filename)
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
+
+    except Exception as e:
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        filename, lineno, func, text = tb[-1]  # last call in stack
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        raise HTTPException(status_code=500, detail=error_message)
+
+
+@app.post("/test-geoparser")
+async def analyze_goldstandard_geoparser(
+    file: UploadFile = File(..., description="XML file containing events"),
+    download: bool = Query(False, description="If True, return a downloadable .json"),
+    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
+):
+    """
+    Analyze an XML file containing events.
+    Extract the geographic entities and apply the disambiguation process using Geoparser's NER + custom entity linker.
+    """
+    try:
+
+        content = await parse_excel_xml(file)
+
+        features = []
+        features_geosparql = []
+
+        geoparser = Geoparser(
+            spacy_model="en_core_web_trf",
+            transformer_model="dguzh/geo-all-MiniLM-L6-v2", # dguzh/geo-all-distilroberta-v1
+            gazetteer="geonames"
+        )
+
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql.setReturnFormat(JSON)
+
+        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        for i, event in enumerate(content):
+
+            row = {
+                "row": i + 1,
+                "entities": []
+            }
+
+            docs = geoparser.parse([event])
+
+            print("\nEntities found:")
+            for doc in docs:
+                for toponym in doc.toponyms:
+
+                    while True:
+
+                        try:
+
+                            entities = []
+
+                            print(f"- Toponym: {toponym.text}")
+                            location = toponym.location
+
+                            if location:
+                                geonames_id = location['geonameid']
+                                iri = 'https://www.geonames.org/' + geonames_id
+                                wikidata_entity = get_wikidata_entity_from_geonames(iri)
+
+                                if wikidata_entity:
+                                    if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
+
+                                        append_feature(row, wikidata_entity['label'], wikidata_entity['id'])
+
+                                        if download_geosparql:
+
+                                            do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
+
+                                else:
+                                    print(f"Entity {location['name']} could not be resolved. Trying with spacy...")
+
+                            else:
+                                print(f"Location could not be resolved. Skipping {toponym.text}...")
+
+                            break
+
+                        except urllib.error.HTTPError as e:
+                            if e.code == 429:
+                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
+                                time.sleep(5)
+
+            print(f"\nRow: {row}\n")
+            features.append(row)
+
+        if not download:
+            return JSONResponse(content=features,
+                                media_type="application/json")
+
+        if download_geosparql:
+
+            geosparql_doc = {
+                **GEOSPARQL_CONTEXT,
+                "@graph": features_geosparql
+            }
+            return download_zip(features, geosparql_doc)
+
+        else:
+
+            return download_features(features)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
