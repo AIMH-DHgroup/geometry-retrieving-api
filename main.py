@@ -2951,8 +2951,6 @@ async def analyze_goldstandard_geoparser(
         sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
         sparql.setReturnFormat(JSON)
 
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
         for i, event in enumerate(content):
 
             row = {
@@ -2990,7 +2988,7 @@ async def analyze_goldstandard_geoparser(
                                             do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
 
                                 else:
-                                    print(f"Entity {location['name']} could not be resolved. Trying with spacy...")
+                                    print(f"Entity {location['name']} could not be resolved. Skipping...")
 
                             else:
                                 print(f"Location could not be resolved. Skipping {toponym.text}...")
@@ -3001,6 +2999,10 @@ async def analyze_goldstandard_geoparser(
                             if e.code == 429:
                                 print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
                                 time.sleep(5)
+
+                        except requests.RequestException as e:
+                            print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
@@ -3022,7 +3024,5 @@ async def analyze_goldstandard_geoparser(
             return download_features(features)
 
     except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
+        full_trace = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"{str(e)}\nTraceback:\n{full_trace}")
