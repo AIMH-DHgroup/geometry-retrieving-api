@@ -294,10 +294,6 @@
         "Wikidata_ID": "Q21747298"
       },
       {
-        "text_label": "Rethymno",
-        "Wikidata_ID": "Q200908"
-      },
-      {
         "text_label": "House of Kallergis",
         "Wikidata_ID": "Q111155162"
       },
@@ -1128,7 +1124,7 @@
     "entities": [
       {
         "text_label": "Lancashire",
-        "Wikidata_ID": "Q23077"
+        "Wikidata_ID": "Q67311452"
       }
     ]
   },
@@ -1461,7 +1457,7 @@
     "entities": [
       {
         "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
+        "Wikidata_ID": "Q958049"
       }
     ]
   },
@@ -1799,7 +1795,7 @@
       },
       {
         "text_label": "Crete",
-        "Wikidata_ID": "Q34374"
+        "Wikidata_ID": "Q958049"
       },
       {
         "text_label": "Tzitzifes",
@@ -1873,6 +1869,10 @@
   {
     "row": 193,
     "entities": [
+      {
+        "text_label": "Russian Empire",
+        "Wikidata_ID": "Q34266"
+      },
       {
         "text_label": "Mastichochoria",
         "Wikidata_ID": "Q2639307"

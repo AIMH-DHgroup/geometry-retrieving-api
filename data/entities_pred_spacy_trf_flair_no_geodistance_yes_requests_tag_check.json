@@ -1584,10 +1584,6 @@
       {
         "text_label": "Greece",
         "Wikidata_ID": "Q41"
-      },
-      {
-        "text_label": "Balkans",
-        "Wikidata_ID": "Q23522"
       }
     ]
   },
@@ -1759,10 +1755,6 @@
       {
         "text_label": "United Arab Emirates",
         "Wikidata_ID": "Q878"
-      },
-      {
-        "text_label": "Aydın Province",
-        "Wikidata_ID": "Q79846"
       }
     ]
   },
@@ -1906,7 +1898,7 @@
     "entities": [
       {
         "text_label": "Rhodes",
-        "Wikidata_ID": "Q43048"
+        "Wikidata_ID": "Q22254"
       }
     ]
   },
@@ -2327,7 +2319,7 @@
     "entities": [
       {
         "text_label": "Murcia",
-        "Wikidata_ID": "Q195459"
+        "Wikidata_ID": "Q12225"
       }
     ]
   },
