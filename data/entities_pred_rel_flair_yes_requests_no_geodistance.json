@@ -30,7 +30,7 @@
     "entities": [
       {
         "text_label": "Louvres",
-        "Wikidata_ID": "Q2716584"
+        "Wikidata_ID": "Q908517"
       },
       {
         "text_label": "Paris",
@@ -89,7 +89,7 @@
     "row": 9,
     "entities": [
       {
-        "text_label": "People's Republic of China",
+        "text_label": "China",
         "Wikidata_ID": "Q148"
       },
       {
@@ -227,8 +227,8 @@
         "Wikidata_ID": "Q2805"
       },
       {
-        "text_label": "Netherlands",
-        "Wikidata_ID": "Q55"
+        "text_label": "Holland",
+        "Wikidata_ID": "Q102911"
       },
       {
         "text_label": "Krefeld",
@@ -428,8 +428,8 @@
     "row": 42,
     "entities": [
       {
-        "text_label": "coat of arms of the Ottoman Empire",
-        "Wikidata_ID": "Q817316"
+        "text_label": "Ottoman Empire",
+        "Wikidata_ID": "Q12560"
       },
       {
         "text_label": "Crete",
@@ -537,7 +537,7 @@
     "entities": [
       {
         "text_label": "Murcia",
-        "Wikidata_ID": "Q12225"
+        "Wikidata_ID": "Q195459"
       }
     ]
   },
@@ -709,10 +709,6 @@
     "row": 74,
     "entities": [
       {
-        "text_label": "San Marco Evangelista",
-        "Wikidata_ID": "Q25112961"
-      },
-      {
         "text_label": "Heraklion",
         "Wikidata_ID": "Q160544"
       },
@@ -727,6 +723,10 @@
       {
         "text_label": "Iran",
         "Wikidata_ID": "Q794"
+      },
+      {
+        "text_label": "Palestine",
+        "Wikidata_ID": "Q219060"
       },
       {
         "text_label": "Crete",
@@ -1201,7 +1201,7 @@
       },
       {
         "text_label": "Aragon",
-        "Wikidata_ID": "Q625115"
+        "Wikidata_ID": "Q4040"
       }
     ]
   },
@@ -1217,8 +1217,8 @@
         "Wikidata_ID": "Q3004"
       },
       {
-        "text_label": "Upper Bavarian Forest Nature Park",
-        "Wikidata_ID": "Q884758"
+        "text_label": "Upper Bavaria",
+        "Wikidata_ID": "Q10562"
       }
     ]
   },
@@ -1684,7 +1684,7 @@
       },
       {
         "text_label": "Venice",
-        "Wikidata_ID": "Q641"
+        "Wikidata_ID": "Q773853"
       },
       {
         "text_label": "diocese of the Catholic Church",
@@ -1712,6 +1712,10 @@
   {
     "row": 179,
     "entities": [
+      {
+        "text_label": "Metropolis of Ioannina",
+        "Wikidata_ID": "Q16665890"
+      },
       {
         "text_label": "Ioannina",
         "Wikidata_ID": "Q183199"
@@ -1942,8 +1946,8 @@
         "Wikidata_ID": "Q985630"
       },
       {
-        "text_label": "Zagori Municipality",
-        "Wikidata_ID": "Q9386001"
+        "text_label": "Zagori",
+        "Wikidata_ID": "Q2712111"
       },
       {
         "text_label": "Ioannina",
@@ -2219,7 +2223,7 @@
     "entities": [
       {
         "text_label": "Murcia",
-        "Wikidata_ID": "Q12225"
+        "Wikidata_ID": "Q195459"
       }
     ]
   },
