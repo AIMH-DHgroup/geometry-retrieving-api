@@ -2126,6 +2126,10 @@ async def analyze_goldstandard_rel_flair(
                             print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
                             time.sleep(5)
 
+                    except requests.RequestException as e:
+                        print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
+                        time.sleep(5)
+
             print(f"\nRow: {row}\n")
             features.append(row)
 
@@ -2898,6 +2902,10 @@ async def analyze_goldstandard_geoparser_spacy(
                             if e.code == 429:
                                 print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
                                 time.sleep(5)
+
+                        except requests.RequestException as e:
+                            print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
+                            time.sleep(5)
 
             print(f"\nRow: {row}\n")
             features.append(row)
