@@ -1,3 +1,7 @@
+geopy==2.4.1
+sentence-transformers==3.4.1
+geoparser==0.2.2
+rapidfuzz==3.13.0
 accelerate==1.8.1
 annotated-types==0.7.0
 anyio==4.9.0
