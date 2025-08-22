@@ -85,7 +85,13 @@ WIKIFIER_API_KEY = "xlwepdphbtmqmnyjysnyeubopqovgm"
 
 not_supported_message = "Language not supported. Please insert one value among \'en\' (English), \'it\' (Italian), \'fr\' (French), \'de\' (Deutsch), \'ru\' (Russian), \'pt\' (Portuguese), \'es\' (Spanish), \'nl\' (Dutch) , \'pl\' (Polish) or \'xx\' (for multi language texts)."
 
-app = FastAPI()
+app = FastAPI(
+    title="GeoLinks API",     # docs title
+    description="Example description",
+    version="1.0.0",
+    docs_url="/docs",         # URL Swagger
+    redoc_url="/redoc",       # URL ReDoc
+)
 
 SPACY_MODELS = {
     "en": "en_core_web_trf",
