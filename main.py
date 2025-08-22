@@ -9,12 +9,12 @@ import xml.etree.ElementTree as ET
 from typing import Optional
 from langdetect import detect
 from uuid import uuid4
-from flair.data import Sentence
+#from flair.data import Sentence
 from flair.models import SequenceTagger
 from flair.splitter import SegtokSentenceSplitter
 from sentence_transformers import SentenceTransformer, util
 from SPARQLWrapper import SPARQLWrapper, JSON
-from geopy.distance import geodesic
+#from geopy.distance import geodesic
 from pydantic import BaseModel
 from geoparser import Geoparser
 from rapidfuzz import process, fuzz
@@ -61,8 +61,8 @@ class WikipediaRateLimitException(Exception):
 
 GEOSPARQL_CONTEXT = {
     "@context": {
-        "geo":        "http://www.opengis.net/ont/geosparql#",
-        "schema":     "http://schema.org/",
+        "geo":        "https://www.opengis.net/ont/geosparql#",
+        "schema":     "https://schema.org/",
         "xsd":        "http://www.w3.org/2001/XMLSchema#",
         "label":      "schema:name",
         "description":"schema:description",
@@ -80,6 +80,8 @@ GEOSPARQL_CONTEXT = {
 }
 
 SUPPORTED_LANGUAGES = ["en", "it", "de", "fr", "es", "pt", "nl", "ru", "pl", "xx"]  # official Wikifier supported languages
+
+WIKIFIER_API_KEY = "xlwepdphbtmqmnyjysnyeubopqovgm"
 
 not_supported_message = "Language not supported. Please insert one value among \'en\' (English), \'it\' (Italian), \'fr\' (French), \'de\' (Deutsch), \'ru\' (Russian), \'pt\' (Portuguese), \'es\' (Spanish), \'nl\' (Dutch) , \'pl\' (Polish) or \'xx\' (for multi language texts)."
 
@@ -100,9 +102,9 @@ SPACY_MODELS = {
 
 loaded_models = {}
 
-WIKIFIER_API_KEY = os.getenv("WIKIFIER_API_KEY")
-if not WIKIFIER_API_KEY:
-    raise EnvironmentError("WIKIFIER_API_KEY not defined in environment.")
+#WIKIFIER_API_KEY = os.getenv("WIKIFIER_API_KEY")
+#if not WIKIFIER_API_KEY:
+#    raise EnvironmentError("WIKIFIER_API_KEY not defined in environment.")
 
 
 # ======= Pydantic model =======
@@ -136,7 +138,7 @@ def extract_geo_entity(doc, context=None):
         return [{"text": ent.text, "context": context} for ent in doc.ents if ent.label_ in ["LOC", "GPE", "NOUN", "PROPN"]]
 
 def disambiguation_with_wikifier(text, lang="en"):
-    url = "http://www.wikifier.org/annotate-article"
+    url = "https://www.wikifier.org/annotate-article"
     data = {
         "text": text,
         "lang": lang,
@@ -152,7 +154,7 @@ def disambiguation_with_wikifier(text, lang="en"):
     return response.json().get("annotations", [])
 
 def call_wikifier(text: str, lang: str = "en", threshold: float = 0.8):
-    url = "http://www.wikifier.org/annotate-article"
+    url = "https://www.wikifier.org/annotate-article"
     data = {
         'text': text,
         'lang': lang,
@@ -512,7 +514,7 @@ def get_wikipedia_article_from_geonames(geonames_iri):
     if response.status_code == 200:
         root = ET.fromstring(response.content)
         ns = {
-            'gn': 'http://www.geonames.org/ontology#',
+            'gn': 'https://www.geonames.org/ontology#',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         }
 
@@ -532,7 +534,7 @@ def get_wikidata_entity_from_geonames(geonames_iri):
     if response.status_code == 200:
         root = ET.fromstring(response.content)
         ns = {
-            'gn': 'http://www.geonames.org/ontology#',
+            'gn': 'https://www.geonames.org/ontology#',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         }
 
@@ -606,7 +608,7 @@ def get_geonames_label(geonames_id):
     if response.status_code == 200:
         root = ET.fromstring(response.content)
         ns = {
-            'gn': 'http://www.geonames.org/ontology#',
+            'gn': 'https://www.geonames.org/ontology#',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
             'rdfs': 'http://www.w3.org/2000/01/rdf-schema#'
         }
@@ -762,7 +764,7 @@ def filter_by_mentions(wikifier_result, mentions):
             })
     return entities
 
-def choose_best(model, candidates, context, other_coords=[]):
+def choose_best(model, candidates, context):    #, other_coords=[]
     if not candidates:
         return None
 
@@ -772,10 +774,10 @@ def choose_best(model, candidates, context, other_coords=[]):
         desc_embedding = model.encode(c['description'], convert_to_tensor=True)
         sim = util.cos_sim(context_embedding, desc_embedding).item()
 
-        dist_penalty = 0
-        if c['coord'] and other_coords:
-            distances = [geodesic(c['coord'], other).km for other in other_coords if other]
-            dist_penalty = sum(distances) / len(distances)
+        #dist_penalty = 0
+        #if c['coord'] and other_coords:
+        #    distances = [geodesic(c['coord'], other).km for other in other_coords if other]
+        #    dist_penalty = sum(distances) / len(distances)
 
         score = sim # sim - (dist_penalty / 10000)
         scored.append((score, c))
@@ -1532,7 +1534,7 @@ async def analyze_goldstandard_flair(
                     context = ent['context']
                     candidates = query_candidates(sparql, label)
                     if candidates:
-                        best = choose_best(model, candidates, context, all_coords)
+                        best = choose_best(model, candidates, context)  #, all_coords
 
                         if best:
 
@@ -1924,7 +1926,7 @@ async def analyze_goldstandard_rel(
                             context = ent['context']
                             candidates = query_candidates(sparql, label)
                             if candidates:
-                                best = choose_best(model, candidates, context, all_coords)
+                                best = choose_best(model, candidates, context)  #, all_coords
 
                                 if best:
 
@@ -2092,7 +2094,7 @@ async def analyze_goldstandard_rel_flair(
                             context = ent['context']
                             candidates = query_candidates(sparql, label)
                             if candidates:
-                                best = choose_best(model, candidates, context, all_coords)
+                                best = choose_best(model, candidates, context)  #, all_coords
 
                                 if best:
 
@@ -2126,7 +2128,7 @@ async def analyze_goldstandard_rel_flair(
                             print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
                             time.sleep(5)
 
-                    except requests.RequestException as e:
+                    except requests.RequestException:
                         print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
                         time.sleep(5)
 
@@ -2213,7 +2215,7 @@ async def analyze_goldstandard_spacy(
                             context = ent['context']
                             candidates = query_candidates(sparql, label)
                             if candidates:
-                                best = choose_best(model, candidates, context, all_coords)
+                                best = choose_best(model, candidates, context)  #, all_coords
 
                                 if best:
 
@@ -2307,7 +2309,7 @@ async def analyze_goldstandard_spacy_entity_linker(
             }
 
             doc = nlp(event)
-            all_linked_entities = doc._.linkedEntities
+            #all_linked_entities = doc._.linkedEntities
             ents = doc.ents
             entities_spacy = []
 
@@ -2346,7 +2348,7 @@ async def analyze_goldstandard_spacy_entity_linker(
                             context = ent['context']
                             candidates = query_candidates(sparql, label)
                             if candidates:
-                                best = choose_best(model, candidates, context, all_coords)
+                                best = choose_best(model, candidates, context)  #, all_coords
 
                                 if best:
 
@@ -2482,7 +2484,7 @@ async def analyze_goldstandard_spacy_flair(
                             context = ent['context']
                             candidates = query_candidates(sparql, label)
                             if candidates:
-                                best = choose_best(model, candidates, context, all_coords)
+                                best = choose_best(model, candidates, context)  #, all_coords
 
                                 if best:
 
@@ -2639,7 +2641,7 @@ async def analyze_goldstandard_geoparser_wikidata(
                                         context = event
                                         candidates = query_candidates(sparql, label)
                                         if candidates:
-                                            best = choose_best(model, candidates, context, all_coords)
+                                            best = choose_best(model, candidates, context)  #, all_coords
 
                                             if best:
 
@@ -2678,7 +2680,7 @@ async def analyze_goldstandard_geoparser_wikidata(
                                     context = event
                                     candidates = query_candidates(sparql, label)
                                     if candidates:
-                                        best = choose_best(model, candidates, context, all_coords)
+                                        best = choose_best(model, candidates, context)  #, all_coords
 
                                         if best:
 
@@ -2827,7 +2829,7 @@ async def analyze_goldstandard_geoparser_spacy(
                                         context = event
                                         candidates = query_candidates(sparql, label)
                                         if candidates:
-                                            best = choose_best(model, candidates, context, all_coords)
+                                            best = choose_best(model, candidates, context)  #, all_coords
 
                                             if best:
 
@@ -2866,7 +2868,7 @@ async def analyze_goldstandard_geoparser_spacy(
                                     context = event
                                     candidates = query_candidates(sparql, label)
                                     if candidates:
-                                        best = choose_best(model, candidates, context, all_coords)
+                                        best = choose_best(model, candidates, context)  #, all_coords
 
                                         if best:
 
@@ -2903,7 +2905,7 @@ async def analyze_goldstandard_geoparser_spacy(
                                 print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
                                 time.sleep(5)
 
-                        except requests.RequestException as e:
+                        except requests.RequestException:
                             print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
                             time.sleep(5)
 
@@ -3008,7 +3010,7 @@ async def analyze_goldstandard_geoparser(
                                 print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
                                 time.sleep(5)
 
-                        except requests.RequestException as e:
+                        except requests.RequestException:
                             print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
                             time.sleep(5)
 
