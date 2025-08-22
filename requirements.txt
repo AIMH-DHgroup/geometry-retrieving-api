@@ -1,10 +1,13 @@
-geopy==2.4.1
-sentence-transformers==3.4.1
-geoparser==0.2.2
-rapidfuzz==3.13.0
-accelerate==1.8.1
+accelerate==0.34.2
+aiohappyeyeballs==2.6.1
+aiohttp==3.12.14
+aiosignal==1.4.0
 annotated-types==0.7.0
+antlr4-python3-runtime==4.9.3
 anyio==4.9.0
+appdirs==1.4.4
+art==6.2
+async-timeout==5.0.1
 attrs==25.3.0
 beautifulsoup4==4.13.4
 bioc==2.1
@@ -17,38 +20,46 @@ certifi==2025.4.26
 charset-normalizer==3.4.2
 click==8.1.8
 cloudpathlib==0.21.0
+colorama==0.4.6
+colorlog==6.9.0
 confection==0.1.5
 conllu==4.5.3
 contourpy==1.3.0
+curated-tokenizers==0.0.9
+curated-transformers==0.1.1
 cycler==0.12.1
 cymem==2.0.11
+datasets==3.6.0
 DAWG2-Python==0.9.0
 defusedxml==0.7.1
 Deprecated==1.2.18
+dill==0.3.7
+docker-pycreds==0.4.0
 docopt==0.6.2
-en_core_web_trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.8.0/en_core_web_trf-3.8.0-py3-none-any.whl
-en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
-it_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
-de_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.8.0/de_core_news_sm-3.8.0-py3-none-any.whl
-fr_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.8.0/fr_core_news_sm-3.8.0-py3-none-any.whl
-es_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.8.0/es_core_news_sm-3.8.0-py3-none-any.whl
-pt_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/pt_core_news_sm-3.8.0/pt_core_news_sm-3.8.0-py3-none-any.whl
-nl_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/nl_core_news_sm-3.8.0/nl_core_news_sm-3.8.0-py3-none-any.whl
-ru_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/ru_core_news_sm-3.8.0/ru_core_news_sm-3.8.0-py3-none-any.whl
-pl_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/pl_core_news_sm-3.8.0/pl_core_news_sm-3.8.0-py3-none-any.whl
-xx_ent_wiki_sm @ https://github.com/explosion/spacy-models/releases/download/xx_ent_wiki_sm-3.8.0/xx_ent_wiki_sm-3.8.0-py3-none-any.whl
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl#sha256=1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85
+en_core_web_trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.8.0/en_core_web_trf-3.8.0-py3-none-any.whl#sha256=272a31e9d8530d1e075351d30a462d7e80e31da23574f1b274e200f3fff35bf5
 exceptiongroup==1.3.0
 fastapi==0.115.12
 filelock==3.18.0
 flair==0.15.1
 fonttools==4.58.0
-fsspec==2025.5.1
+frozenlist==1.7.0
+fsspec==2025.3.0
 ftfy==6.3.1
 gdown==5.2.0
+geographiclib==2.0
 geojson==3.2.0
+geopandas==1.1.1
+geoparser==0.2.2
+geopy==2.4.1
+gitdb==4.0.12
+GitPython==3.1.44
 h11==0.16.0
+haversine==2.9.0
 hf-xet==1.1.5
 huggingface-hub==0.33.2
+hydra-colorlog==1.2.0
+hydra-core==1.3.2
 idna==3.10
 importlib_resources==6.5.2
 intervaltree==3.1.0
@@ -61,6 +72,8 @@ kiwisolver==1.4.7
 langcodes==3.5.0
 langdetect==1.0.9
 language_data==1.3.0
+lightning==2.3.3
+lightning-utilities==0.14.3
 lxml==6.0.0
 marisa-trie==1.2.1
 markdown-it-py==3.0.0
@@ -70,29 +83,42 @@ mdurl==0.1.2
 more-itertools==10.7.0
 mpld3==0.5.10
 mpmath==1.3.0
+multidict==6.6.3
+multiprocess==0.70.15
 murmurhash==1.0.12
 networkx==3.2.1
 numpy==2.0.2
 odfpy==1.4.1
+omegaconf==2.3.0
+overrides==7.7.0
 packaging==25.0
 pandas==2.3.0
 pillow==11.2.1
+platformdirs==4.3.8
+pprintpp==0.4.0
 pptree==3.1
 preshed==3.0.9
+propcache==0.3.2
 protobuf==6.31.1
 psutil==7.0.0
+pyarrow==20.0.0
+pyarrow-hotfix==0.7
 pydantic==2.11.4
 pydantic_core==2.33.2
 Pygments==2.19.1
 pymorphy3==2.0.3
 pymorphy3-dicts-ru==2.4.417150.4580142
+pyogrio==0.11.0
 pyparsing==3.2.3
+pyproj==3.7.1
 PySocks==1.7.1
 python-dateutil==2.9.0.post0
 python-multipart==0.0.20
+pytorch-lightning==2.5.2
 pytorch_revgrad==0.2.0
 pytz==2025.2
 PyYAML==6.0.2
+RapidFuzz==3.13.0
 rdflib==7.1.4
 regex==2024.11.6
 requests==2.32.3
@@ -102,40 +128,54 @@ safetensors==0.5.3
 scikit-learn==1.6.1
 scipy==1.13.1
 segtok==1.5.11
+sentence-transformers==3.4.1
 sentencepiece==0.2.0
+sentry-sdk==2.33.0
+setproctitle==1.3.6
 shapely==2.0.7
 shellingham==1.5.4
 six==1.17.0
 smart-open==7.1.0
+smmap==5.0.2
 sniffio==1.3.1
 sortedcontainers==2.4.0
 soupsieve==2.7
 spacy==3.8.5
+spacy-curated-transformers==0.3.1
+spacy-entity-linker==1.0.3
 spacy-legacy==3.0.12
 spacy-loggers==1.0.5
 SPARQLWrapper==2.0.0
+SQLAlchemy==2.0.41
 sqlitedict==2.1.0
+sqlmodel==0.0.22
 srsly==2.5.1
 starlette==0.46.2
 sympy==1.14.0
 tabulate==0.9.0
+termcolor==2.4.0
 thinc==8.3.6
 threadpoolctl==3.6.0
 tokenizers==0.21.2
 torch==2.7.1
+torchmetrics==1.7.4
 tqdm==4.67.1
 transformer-smaller-training-vocab==0.4.2
 transformers==4.53.1
-typer==0.15.3
+typer==0.12.5
 typing-inspection==0.4.0
 typing_extensions==4.13.2
 tzdata==2025.2
 urllib3==2.4.0
 uvicorn==0.34.2
+wandb==0.17.9
 wasabi==1.1.3
 wcwidth==0.2.13
 weasel==0.4.1
+Werkzeug==3.1.3
 Wikidata==0.8.1
 Wikipedia-API==0.8.1
 wrapt==1.17.2
+xxhash==3.5.0
+yarl==1.20.1
 zipp==3.21.0
