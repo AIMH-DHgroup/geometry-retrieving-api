@@ -1122,7 +1122,8 @@ async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geona
         return FileResponse(path, media_type="application/ld+json", filename=filename)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        full_trace = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"{str(e)}\nTraceback:\n{full_trace}")
 
 @app.post("/analyze-from-csv")
 async def analyze_geonames_csv(
