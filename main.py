@@ -87,7 +87,19 @@ not_supported_message = "Language not supported. Please insert one value among \
 
 app = FastAPI(
     title="GeoLinks API",     # docs title
-    description="Example description",
+    description="""GeoLink is a powerful API designed to analyze input text and extract detailed information about geographical or other domain-specific entities.
+ 
+### Features
+ 
+- **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
+- **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
+- **Flexible Usage**: Supports both batch processing and real-time requests.
+ 
+### Use Cases
+ 
+1. Annotating place names and linking to knowledge bases.
+2. Enriching text with geo-context for mapping or GIS applications.
+3. Enabling advanced search by entity attributes within natural language content.""",
     version="1.0.0",
     docs_url="/docs",         # URL Swagger
     redoc_url="/redoc",       # URL ReDoc
