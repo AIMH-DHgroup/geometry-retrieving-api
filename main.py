@@ -90,17 +90,17 @@ app = FastAPI(
     title="GeoLinks API",     # docs title
     description="""GeoLink is a powerful API designed to analyze input text and extract detailed information about geographical or other domain-specific entities.
  
-### Features
- 
-- **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
-- **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
-- **Flexible Usage**: Supports both batch processing and real-time requests.
- 
-### Use Cases
- 
-1. Annotating place names and linking to knowledge bases.
-2. Enriching text with geo-context for mapping or GIS applications.
-3. Enabling advanced search by entity attributes within natural language content.""",
+    ### Features
+     
+    - **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
+    - **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
+    - **Flexible Usage**: Supports both batch processing and real-time requests.
+     
+    ### Use Cases
+     
+    1. Annotating place names and linking to knowledge bases.
+    2. Enriching text with geo-context for mapping or GIS applications.
+    3. Enabling advanced search by entity attributes within natural language content.""",
     version="1.0.0",
     docs_url="/docs",         # URL Swagger
     redoc_url="/redoc",       # URL ReDoc
@@ -936,12 +936,12 @@ def append_feature(row, label, qid):
 async def root():
     return RedirectResponse(url="/docs")
 
-@app.post("/geosparql")
-def analyze_from_input(data: TextInput, download: bool = True):
+@app.post("/geolinks-text")
+def read_text(data: TextInput, download: bool = True):
     """
-        Return JSON‑LD compliant with GeoSPARQL.
-        ?download=false --> JSON inline
-        else downloadable .jsonld file
+        Input: a JSON containing the text and the language as input, for example {"text": "your_text", "lang": "en"}.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response.
     """
     try:
         lang = data.lang.lower()
@@ -990,12 +990,13 @@ def analyze_from_input(data: TextInput, download: bool = True):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/analyze-from-xml")
-async def analyze_from_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
+@app.post("/geolinks-xml")
+async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
     """
-    Parse an uploaded XML file,
-    extract text from a specific node,
-    and start to analyze.
+        Input: an XML file.
+        Output: a JSON+LD file containing information about the entities found.
+        "Lang" is set to "en" by default.
+        If "download" is True, a link is provided to download the response.
     """
     try:
         lang = lang.lower()
@@ -1069,11 +1070,13 @@ async def analyze_from_xml(file: UploadFile = File(...), lang: Optional[str] = "
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/analyze-from-iri")
-async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geonames (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Analysis language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
+@app.post("/geolinks-iri")
+async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Text language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
     """
-    Analyze a GeoNames data page using IRI.
-    Extract the main content and apply the geographic disambiguation process.
+        Input: a Geonames IRI.
+        Output: a JSON+LD file containing information about the entities found.
+        "Lang" is set to "en" by default.
+        If "download" is True, a link is provided to download the response.
     """
     try:
         lang = lang.lower()
@@ -1149,15 +1152,16 @@ async def analyze_geonames_iri(iri: str = Query(..., description="IRI from Geona
         full_trace = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"{str(e)}\nTraceback:\n{full_trace}")
 
-@app.post("/analyze-from-csv")
-async def analyze_geonames_csv(
+@app.post("/geolinks-csv")
+async def read_csv_geonames(
     file: UploadFile = File(..., description="CSV file with a 'geonames' column containing GeoNames IRIs"),
     #lang: str = Query("en", description="Analysis language"),
     download: bool = Query(False, description="If True, return a downloadable .jsonld")
 ):
     """
-    Analyze a CSV file containing GeoNames IRIs in the 'geonames' column.
-    Extract the main content and apply the disambiguation process.
+        Input: a CSV file.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response.
     """
     try:
         #lang = lang.lower()
@@ -1428,15 +1432,16 @@ async def analyze_geonames_csv(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test")
-async def analyze_goldstandard(
+@app.post("/test-xml")
+async def read_xml_as_gold_standard(
     file: UploadFile = File(..., description="XML file containing events"),
     #lang: str = Query("en", description="Analysis language"),
     download: bool = Query(False, description="If True, return a downloadable .json")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process. Old version of the algorithm.
+        Input: an XML file.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response.
     """
     try:
 
@@ -1494,14 +1499,17 @@ async def analyze_goldstandard(
         raise HTTPException(status_code=500, detail=error_message)
 
 @app.post("/test-flair")
-async def analyze_goldstandard_flair(
+async def ner_using_flair(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using Flair's NER + custom entity linker.
+        NER is done by Flair, entity linking is done by custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -1613,14 +1621,17 @@ async def analyze_goldstandard_flair(
 
 
 @app.post("/test-flair-custom-linker")
-async def analyze_goldstandard_flair_alternative(
+async def ner_using_flair_alternative(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using an alternative version of Flair's NER implementation + custom entity linker.
+        This is an alternative version of Flair + custom linker.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -1699,14 +1710,17 @@ async def analyze_goldstandard_flair_alternative(
 
 
 @app.post("/test-wikifier")
-async def analyze_goldstandard_wikifier(
+async def wikifier(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using Wikifier.
+        Both NER and entity linking are managed by Wikifier.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -1773,14 +1787,17 @@ async def analyze_goldstandard_wikifier(
 
 
 @app.post("/test-flair-wikifier")
-async def analyze_goldstandard_flair_wikifier(
+async def flair_wikifier(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using Wikifier and Flair+custom entity linker where the former fails.
+        Flair and Wikifier are combined to increase precision: only entities that match are stored in the results.
+        Input: an XML file containing events of the narrative.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
