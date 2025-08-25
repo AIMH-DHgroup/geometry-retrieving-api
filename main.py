@@ -90,17 +90,17 @@ app = FastAPI(
     title="GeoLinks API",     # docs title
     description="""GeoLink is a powerful API designed to analyze input text and extract detailed information about geographical or other domain-specific entities.
  
-    ### Features
-     
-    - **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
-    - **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
-    - **Flexible Usage**: Supports both batch processing and real-time requests.
-     
-    ### Use Cases
-     
-    1. Annotating place names and linking to knowledge bases.
-    2. Enriching text with geo-context for mapping or GIS applications.
-    3. Enabling advanced search by entity attributes within natural language content.""",
+### Features
+ 
+- **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
+- **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
+- **Flexible Usage**: Supports both batch processing and real-time requests.
+ 
+### Use Cases
+ 
+1. Annotating place names and linking to knowledge bases.
+2. Enriching text with geo-context for mapping or GIS applications.
+3. Enabling advanced search by entity attributes within natural language content.""",
     version="1.0.0",
     docs_url="/docs",         # URL Swagger
     redoc_url="/redoc",       # URL ReDoc
@@ -1878,14 +1878,17 @@ async def flair_wikifier(
 
 
 @app.post("/test-rel")
-async def analyze_goldstandard_rel(
+async def rel(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using REL (Radboud Entity Linker) + custom entity linker.
+        NER is done by REL, entity linking is done by custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -2029,14 +2032,17 @@ async def analyze_goldstandard_rel(
 
 
 @app.post("/test-rel-flair")
-async def analyze_goldstandard_rel_flair(
+async def rel_flair(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using REL (Radboud Entity Linker) + Flair where the former fails + custom entity linker.
+        NER is done by REL, and Flair when the first fails, entity linking is done by custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -2201,14 +2207,17 @@ async def analyze_goldstandard_rel_flair(
 
 
 @app.post("/test-spacy")
-async def analyze_goldstandard_spacy(
+async def ner_using_spacy(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using spaCy's NER + custom entity linker.
+        NER is done by spaCy, entity linking is done by custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -2317,15 +2326,18 @@ async def analyze_goldstandard_spacy(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy-entity-linker")
-async def analyze_goldstandard_spacy_entity_linker(
+@app.post("/test-spacy")
+async def spacy(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using an alternative version of spaCy's NER implementation + custom entity linker.
+        NER is done by spaCy, entity linking is done by both spaCy and custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -2453,15 +2465,18 @@ async def analyze_goldstandard_spacy_entity_linker(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy385-flair")
-async def analyze_goldstandard_spacy_flair(
+@app.post("/test-spacy-flair")
+async def ner_spacy_flair(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using spaCy's NER + Flair's NER + custom entity linker.
+        NER is done by spaCy and Flair, taking into account all the entities found, entity linking is done by custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
