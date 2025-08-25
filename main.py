@@ -2038,7 +2038,7 @@ async def rel_flair(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is done by REL, and Flair when the first fails, entity linking is done by custom algorithm.
+        NER is managed by REL, and Flair when the first fails, entity linking is done by custom algorithm.
         Input: an XML file containing events.
         Output: a JSON+LD file containing information about the entities found.
         If "download" is True, a link is provided to download the response in JSON format.
@@ -2607,14 +2607,17 @@ async def ner_spacy_flair(
 
 
 @app.post("/test-geoparser-wikidata")
-async def analyze_goldstandard_geoparser_wikidata(
+async def geoparser_wikidata(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using Geoparser's NER + custom entity linker even when the former fails (giving the toponym.text as input)
+        Geoparser + Wikidata, the former is used for NER, the latter for entity linking. When Wikifier fails, a custom algorithm is used.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -2801,14 +2804,17 @@ async def analyze_goldstandard_geoparser_wikidata(
 
 
 @app.post("/test-geoparser-spacy")
-async def analyze_goldstandard_geoparser_spacy(
+async def geoparser_spacy(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using Geoparser's NER + spaCy's NER + custom entity linker.
+        Geoparser + spaCy, when the former fails, the latter is used. Entity linking is managed by a custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
@@ -2993,14 +2999,17 @@ async def analyze_goldstandard_geoparser_spacy(
 
 
 @app.post("/test-geoparser")
-async def analyze_goldstandard_geoparser(
+async def geoparser(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-    Analyze an XML file containing events.
-    Extract the geographic entities and apply the disambiguation process using Geoparser's NER + custom entity linker.
+        NER is managed by Geoparser, entity linking is managed by a custom algorithm.
+        Input: an XML file containing events.
+        Output: a JSON+LD file containing information about the entities found.
+        If "download" is True, a link is provided to download the response in JSON format.
+        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
     """
     try:
 
