@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
+from starlette.responses import RedirectResponse
 from urllib.parse import urlparse, unquote
 import urllib.error
 from fastapi import UploadFile, File
@@ -929,6 +930,11 @@ def append_feature(row, label, qid):
 
 
 # ======= FastAPI endpoints =======
+
+# redirect from root to /docs
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 @app.post("/geosparql")
 def analyze_from_input(data: TextInput, download: bool = True):
