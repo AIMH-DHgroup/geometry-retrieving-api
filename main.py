@@ -89,7 +89,7 @@ not_supported_message = "Language not supported. Please insert one value among \
 tags_metadata = [
     {
         "name": "GeoLinks",
-        "description": "These endpoints use an old version of the algorithm: the entity linking simply consists in searching on Wikidata the entity given in input, and always taking the first result. The limits are evident.",
+        "description": "These endpoints use an old version of the algorithm: the entity linking simply involves searching Wikidata for the entity provided as input, always taking the first result. The limitations are obvious.",
     },
 {
         "name": "Test",
