@@ -89,11 +89,15 @@ not_supported_message = "Language not supported. Please insert one value among \
 tags_metadata = [
     {
         "name": "GeoLinks",
-        "description": "These endpoints use an old version of the algorithm: the entity linking simply involves searching Wikidata for the entity provided as input, always taking the first result. The limitations are obvious.",
+        "description": "These endpoints are the most performant and should be used for demonstrations and by users.",
     },
-{
+    {
         "name": "Test",
         "description": "These endpoints are under development and have been used for testing and experiments.",
+    },
+    {
+        "name": "Old GeoLinks",
+        "description": "These endpoints use an old version of the algorithm: the entity linking simply involves searching Wikidata for the entity provided as input, always taking the first result. The limitations are obvious.",
     },
 ]
 
@@ -948,7 +952,7 @@ def append_feature(row, label, qid):
 async def root():
     return RedirectResponse(url="/docs")
 
-@app.post("/geolinks-text", tags=["GeoLinks"])
+@app.post("/geolinks-text", tags=["Old GeoLinks"])
 def read_text(data: TextInput, download: bool = True):
     """
         Input: a JSON containing the text and the language as input, for example {"text": "your_text", "lang": "en"}.
@@ -1002,7 +1006,7 @@ def read_text(data: TextInput, download: bool = True):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/geolinks-xml", tags=["GeoLinks"])
+@app.post("/geolinks-xml", tags=["Old GeoLinks"])
 async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
     """
         Input: an XML file.
@@ -1082,7 +1086,7 @@ async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", dow
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/geolinks-iri", tags=["GeoLinks"])
+@app.post("/geolinks-iri", tags=["Old GeoLinks"])
 async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Text language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
     """
         Input: a Geonames IRI.
@@ -1164,7 +1168,7 @@ async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g
         full_trace = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"{str(e)}\nTraceback:\n{full_trace}")
 
-@app.post("/geolinks-csv", tags=["GeoLinks"])
+@app.post("/geolinks-csv", tags=["Old GeoLinks"])
 async def read_csv_geonames(
     file: UploadFile = File(..., description="CSV file with a 'geonames' column containing GeoNames IRIs"),
     #lang: str = Query("en", description="Analysis language"),
@@ -2218,8 +2222,8 @@ async def rel_flair(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy", tags=["Test"])
-async def ner_using_spacy(
+@app.post("/spacy", tags=["GeoLinks"])
+async def spacy_ner(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
@@ -2338,8 +2342,8 @@ async def ner_using_spacy(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy", tags=["Test"])
-async def spacy(
+@app.post("/test-spacy-el", tags=["Test"])
+async def spacy_ner_el(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
@@ -2477,7 +2481,7 @@ async def spacy(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy-flair", tags=["Test"])
+@app.post("/spacy-flair", tags=["GeoLinks"])
 async def ner_spacy_flair(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
