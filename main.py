@@ -86,6 +86,17 @@ WIKIFIER_API_KEY = "xlwepdphbtmqmnyjysnyeubopqovgm"
 
 not_supported_message = "Language not supported. Please insert one value among \'en\' (English), \'it\' (Italian), \'fr\' (French), \'de\' (Deutsch), \'ru\' (Russian), \'pt\' (Portuguese), \'es\' (Spanish), \'nl\' (Dutch) , \'pl\' (Polish) or \'xx\' (for multi language texts)."
 
+tags_metadata = [
+    {
+        "name": "GeoLinks",
+        "description": "These endpoints use an old version of the algorithm: the entity linking simply consists in searching on Wikidata the entity given in input, and always taking the first result. The limits are evident.",
+    },
+{
+        "name": "Test",
+        "description": "These endpoints are under development and have been used for testing and experiments.",
+    },
+]
+
 app = FastAPI(
     title="GeoLinks API",     # docs title
     description="""GeoLink is a powerful API designed to analyze input text and extract detailed information about geographical or other domain-specific entities.
@@ -104,6 +115,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",         # URL Swagger
     redoc_url="/redoc",       # URL ReDoc
+    openapi_tags=tags_metadata
 )
 
 SPACY_MODELS = {
