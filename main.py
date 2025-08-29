@@ -97,7 +97,7 @@ tags_metadata = [
     },
     {
         "name": "Old GeoLinks",
-        "description": "These endpoints use an old version of the algorithm: the entity linking simply involves searching Wikidata for the entity provided as input, always taking the first result. The limitations are obvious.",
+        "description": "These endpoints use an older version of the algorithm: the entity linking simply involves searching Wikidata for the corresponding entity, always taking the first result. The limitations are obvious.",
     },
 ]
 
@@ -956,8 +956,12 @@ async def root():
 def read_text(data: TextInput, download: bool = True):
     """
         Input: a JSON containing the text and the language as input, for example {"text": "your_text", "lang": "en"}.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response.
+
+        This endpoint parses the text using an older version of spaCy to identify and memorize geographic entities. Then, it searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         lang = data.lang.lower()
@@ -1010,9 +1014,14 @@ def read_text(data: TextInput, download: bool = True):
 async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
     """
         Input: an XML file.
+
         Output: a JSON+LD file containing information about the entities found.
+
         "Lang" is set to "en" by default.
+
         If "download" is True, a link is provided to download the response.
+
+        After successfully reading the XML file, it parses the text using an older version of spaCy to identify and store geographic entities. Then, it searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         lang = lang.lower()
@@ -1090,9 +1099,14 @@ async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", dow
 async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Text language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
     """
         Input: a Geonames IRI.
+
         Output: a JSON+LD file containing information about the entities found.
+
         "Lang" is set to "en" by default.
+
         If "download" is True, a link is provided to download the response.
+
+        This endpoint extract the entity name from the IRI. Then, it searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         lang = lang.lower()
@@ -1176,8 +1190,12 @@ async def read_csv_geonames(
 ):
     """
         Input: a CSV file.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response.
+
+        This endpoint analyzes all the IRIs contained in the CSV file and searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         #lang = lang.lower()
