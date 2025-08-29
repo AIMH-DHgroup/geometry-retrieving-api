@@ -952,7 +952,7 @@ def append_feature(row, label, qid):
 async def root():
     return RedirectResponse(url="/docs")
 
-@app.post("/geolinks-text", tags=["Old GeoLinks"])
+@app.post("/text", tags=["Old GeoLinks"])
 def read_text(data: TextInput, download: bool = True):
     """
         Input: a JSON containing the text and the language as input, for example {"text": "your_text", "lang": "en"}.
@@ -1006,7 +1006,7 @@ def read_text(data: TextInput, download: bool = True):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/geolinks-xml", tags=["Old GeoLinks"])
+@app.post("/old-xml", tags=["Old GeoLinks"])
 async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
     """
         Input: an XML file.
@@ -1086,7 +1086,7 @@ async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", dow
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/geolinks-iri", tags=["Old GeoLinks"])
+@app.post("/iri", tags=["Old GeoLinks"])
 async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Text language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
     """
         Input: a Geonames IRI.
@@ -1168,7 +1168,7 @@ async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g
         full_trace = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"{str(e)}\nTraceback:\n{full_trace}")
 
-@app.post("/geolinks-csv", tags=["Old GeoLinks"])
+@app.post("/csv", tags=["Old GeoLinks"])
 async def read_csv_geonames(
     file: UploadFile = File(..., description="CSV file with a 'geonames' column containing GeoNames IRIs"),
     #lang: str = Query("en", description="Analysis language"),
@@ -1448,7 +1448,7 @@ async def read_csv_geonames(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-xml", tags=["Test"])
+@app.post("/xml", tags=["Test"])
 async def read_xml_as_gold_standard(
     file: UploadFile = File(..., description="XML file containing events"),
     #lang: str = Query("en", description="Analysis language"),
@@ -1514,7 +1514,7 @@ async def read_xml_as_gold_standard(
         error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
         raise HTTPException(status_code=500, detail=error_message)
 
-@app.post("/test-flair", tags=["Test"])
+@app.post("/flair", tags=["Test"])
 async def ner_using_flair(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -1636,7 +1636,7 @@ async def ner_using_flair(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-flair-custom-linker", tags=["Test"])
+@app.post("/flair-custom-linker", tags=["Test"])
 async def ner_using_flair_alternative(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -1725,7 +1725,7 @@ async def ner_using_flair_alternative(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-wikifier", tags=["Test"])
+@app.post("/wikifier", tags=["Test"])
 async def wikifier(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -1802,7 +1802,7 @@ async def wikifier(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-flair-wikifier", tags=["Test"])
+@app.post("/flair-wikifier", tags=["Test"])
 async def flair_wikifier(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -1893,7 +1893,7 @@ async def flair_wikifier(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-rel", tags=["Test"])
+@app.post("/rel", tags=["Test"])
 async def rel(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -2047,7 +2047,7 @@ async def rel(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-rel-flair", tags=["Test"])
+@app.post("/rel-flair", tags=["Test"])
 async def rel_flair(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -2342,7 +2342,7 @@ async def spacy_ner(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-spacy-el", tags=["Test"])
+@app.post("/spacy-el", tags=["Test"])
 async def spacy_ner_el(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -2622,7 +2622,7 @@ async def ner_spacy_flair(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-geoparser-wikidata", tags=["Test"])
+@app.post("/geoparser-wikidata", tags=["Test"])
 async def geoparser_wikidata(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -2819,7 +2819,7 @@ async def geoparser_wikidata(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-geoparser-spacy", tags=["Test"])
+@app.post("/geoparser-spacy", tags=["Test"])
 async def geoparser_spacy(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
@@ -3014,7 +3014,7 @@ async def geoparser_spacy(
         raise HTTPException(status_code=500, detail=error_message)
 
 
-@app.post("/test-geoparser", tags=["Test"])
+@app.post("/geoparser", tags=["Test"])
 async def geoparser(
     file: UploadFile = File(..., description="XML file containing events"),
     download: bool = Query(False, description="If True, return a downloadable .json"),
