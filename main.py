@@ -961,7 +961,7 @@ def read_text(data: TextInput, download: bool = True):
 
         If "download" is True, a link is provided to download the response.
 
-        This endpoint parses the text using an older version of spaCy to identify and memorize geographic entities. Then, it searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
+        This endpoint parses the text using an older version of spaCy to identify and memorize geographic entities. Then, it searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         lang = data.lang.lower()
@@ -1021,7 +1021,7 @@ async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", dow
 
         If "download" is True, a link is provided to download the response.
 
-        After successfully reading the XML file, it parses the text using an older version of spaCy to identify and store geographic entities. Then, it searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
+        After successfully reading the XML file, it parses the text using an older version of spaCy to identify and store geographic entities. Then, it searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         lang = lang.lower()
@@ -1106,7 +1106,7 @@ async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g
 
         If "download" is True, a link is provided to download the response.
 
-        This endpoint extract the entity name from the IRI. Then, it searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
+        This endpoint extract the entity name from the IRI. Then, it searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         lang = lang.lower()
@@ -1195,7 +1195,7 @@ async def read_csv_geonames(
 
         If "download" is True, a link is provided to download the response.
 
-        This endpoint analyzes all the IRIs contained in the CSV file and searches Wikidata for the corresponding entity (linking), always selecting the first result, and retrieves geographic information such as latitude and longitude. Lastly, the data is provided in GeoSPARQL format.
+        This endpoint analyzes all the IRIs contained in the CSV file and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
         #lang = lang.lower()
@@ -1474,8 +1474,12 @@ async def read_xml_as_gold_standard(
 ):
     """
         Input: an XML file.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response.
+
+        This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -1539,11 +1543,15 @@ async def ner_using_flair(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is done by Flair, entity linking is done by custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Flair and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -1661,11 +1669,15 @@ async def ner_using_flair_alternative(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        This is an alternative version of Flair + custom linker.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Flair and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result and double-checking the geographic type, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -1750,11 +1762,15 @@ async def wikifier(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        Both NER and entity linking are managed by Wikifier.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities and searches Wikidata for the corresponding entity (linking) using Wikifier. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -1827,11 +1843,15 @@ async def flair_wikifier(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        Flair and Wikifier are combined to increase precision: only entities that match are stored in the results.
         Input: an XML file containing events of the narrative.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities selecting only those that match between Flair and Wikifier analysis, then it searches Wikidata for the corresponding entity (linking) using a SPARQL query. Geographic information, such as latitude and longitude, is retrieved from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -1918,11 +1938,15 @@ async def rel(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is done by REL, entity linking is done by custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Radboud Entity Linker (REL) and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -2072,11 +2096,15 @@ async def rel_flair(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is managed by REL, and Flair when the first fails, entity linking is done by custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Radboud Entity Linker (REL) and Flair when the former fails, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -2247,11 +2275,17 @@ async def spacy_ner(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is done by spaCy, entity linking is done by custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
+
+        This is the best endpoint overall, and the highest precision.
     """
     try:
 
@@ -2367,11 +2401,15 @@ async def spacy_ner_el(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is done by spaCy, entity linking is done by both spaCy and custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format. The algorithm is slightly different from "/spacy" endpoint.
     """
     try:
 
@@ -2506,11 +2544,17 @@ async def ner_spacy_flair(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is done by spaCy and Flair, taking into account all the entities found, entity linking is done by custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities selecting the union of sets of entities found by spaCy 3.8.5 and Flair, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
+
+        The quantity of entities found by this algorithm is the highest, but the number of incorrect entities is higher than the "/spacy" endpoint.
     """
     try:
 
@@ -2647,11 +2691,15 @@ async def geoparser_wikidata(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        Geoparser + Wikidata, the former is used for NER, the latter for entity linking. When Wikifier fails, a custom algorithm is used.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Geoparser, and searches Wikidata for the corresponding entity (linking) using Wikifier or a SPARQL query when the former fails. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -2844,11 +2892,15 @@ async def geoparser_spacy(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        Geoparser + spaCy, when the former fails, the latter is used. Entity linking is managed by a custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Geoparser or spaCy 3.8.5 when the former fails, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
@@ -3039,11 +3091,15 @@ async def geoparser(
     download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
 ):
     """
-        NER is managed by Geoparser, entity linking is managed by a custom algorithm.
         Input: an XML file containing events.
+
         Output: a JSON+LD file containing information about the entities found.
+
         If "download" is True, a link is provided to download the response in JSON format.
+
         If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
+
+        This endpoint extract the text from the XML file, detects geographic entities using Geoparser, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
     """
     try:
 
