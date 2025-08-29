@@ -2285,7 +2285,7 @@ async def spacy_ner(
 
         This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
 
-        This is the best endpoint overall, and the highest precision.
+        This is the best endpoint overall and with the highest precision.
     """
     try:
 
