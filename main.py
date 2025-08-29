@@ -89,7 +89,7 @@ not_supported_message = "Language not supported. Please insert one value among \
 tags_metadata = [
     {
         "name": "GeoLinks",
-        "description": "These endpoints are the most performant and should be used for demonstrations and by users.",
+        "description": "These endpoints are the most performant and should be used by users and for demonstrations.",
     },
     {
         "name": "Test",
