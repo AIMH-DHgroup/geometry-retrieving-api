@@ -68,7 +68,7 @@ In the Craeft corpus, the narratives were associated with metadata, including so
 
 The results are reported in the following article: XXXX.
 
-## Supported languages
+## Supported Languages
 The list was taken by Spacy documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French - France), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "gr", etc.
 
 
