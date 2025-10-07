@@ -64,9 +64,12 @@ For each retrieved entity associated with a Wikidata ID, we were able to obtain 
 The best results were obtained using SpaCy and the combination SpaCy+Flair, which achieved very similar performance for the Named Entity Recognition task, while the retrieval of Wikidata IDs was performed via SPARQL queries to the Wikidata endpoint, leveraging the semantic similarity between the contexts in which the NER-extracted entities appear and their descriptions as reported on Wikidata.
 
 ### Input:Geonames IRI 
+In the Craeft corpus, the narratives were associated with metadata, including some GeoNames IRIs for certain geographical entities. These IRIs were extracted and used as input for the corresponding API endpoint. We evaluated the percentage of entities for which the API was able to correctly associate a polygon. 
+
+The results are reported in the following article: XXXX.
 
 ## Supported languages
-The list was taken by Spacy documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French - France), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "xx" (multi language).
+The list was taken by Spacy documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French - France), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "gr", etc.
 
 
 ## Help/Feedback
