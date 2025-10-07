@@ -53,13 +53,17 @@ For example, to retrieve information for Paris (GeoNames ID 2988507), whose GeoN
 https://gel.isti.cnr.it/iri?iri=https://www.geonames.org/2988507/
 
 ## Evaluation
+### Input:Text 
 The evaluation of the API is based on a corpus consisting of # narratives, comprising a total of # events, created within the Horizon Europe Craeft project (https://www.craeft.eu/). The narratives and events were retrieved via the SPARQL endpoint of the project platform and are available in the file Craeft_corpus.txt.
 
 For the evaluation, we created a gold standard composed of # narratives and # events. These numbers were calculated using the sample size determination formula with finite population correction. The gold standard corpus is available in Json format in the file gold_standard.json.
 
-The gold standard was manually annotated, identifying the geographical entities and their corresponding Wikidata IDs. To retrieve the entities and their IDs, we tested several Named Entity Recognition (NER) systems, also in combination with entity linking software. The evaluation metrics (Precision, Recall, and F1) are reported in the following article: XXXX.
+The gold standard was manually annotated, identifying the geographical entities and their corresponding Wikidata IDs. To retrieve the entities and their IDs, we tested several Named Entity Recognition (NER) systems, also in combination with entity linking software. The evaluation metrics (Precision, Recall, and F1) are reported in the following article: XXXX. 
+For each retrieved entity associated with a Wikidata ID, we were able to obtain both the geographical coordinates and the polygon geometry. 
 
 The best results were obtained using SpaCy and the combination SpaCy+Flair, which achieved very similar performance for the Named Entity Recognition task, while the retrieval of Wikidata IDs was performed via SPARQL queries to the Wikidata endpoint, leveraging the semantic similarity between the contexts in which the NER-extracted entities appear and their descriptions as reported on Wikidata.
+
+### Input:Geonames IRI 
 
 ## Supported languages
 The list was taken by Spacy documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French - France), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "xx" (multi language).
