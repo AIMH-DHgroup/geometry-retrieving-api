@@ -36,8 +36,8 @@ The endpoints are ``/analyze`` and ``/geosparql`` and the latter has the ``downl
 ## Usage Instructions
 ### Input:Text 
 When provided with a text input, GeoLink offers two endpoints for Named Entity Recognition (NER):
-- SpaCy-based endpoint: https://gel.isti.cnr.it/spacy — uses SpaCy for NER.
-- SpaCy+Flair endpoint: https://gel.isti.cnr.it/spacy-flair — uses a hybrid SpaCy + Flair model for enhanced entity recognition.
+- SpaCy 3.8-based endpoint: https://gel.isti.cnr.it/spacy — uses SpaCy for NER.
+- SpaCy 3.8+Flair endpoint: https://gel.isti.cnr.it/spacy-flair — uses a hybrid SpaCy + Flair model for enhanced entity recognition.
 
 To use the API, send a POST request to one of the URLs above, including the text you want to analyze in the request body.
 For example, to analyze the text Paris is the capital city of France, the body of the POST request should contain the following JSON object:  
