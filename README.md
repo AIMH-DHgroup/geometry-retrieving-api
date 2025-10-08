@@ -10,7 +10,7 @@ Create a Python environment and install the requirements.txt using the command:
 pip install -r requirements.txt
 ```
 
-After that, run the API with:
+After that, run the API using the command:
 
 ```shell
 uvicorn main:app
