@@ -10,6 +10,14 @@ Create a Python environment and install the requirements.txt using the command:
 pip install -r requirements.txt
 ```
 
+After that, run the API with:
+
+```shell
+uvicorn main:app
+```
+
+To access the API web interface, open this link [tab](http://127.0.0.1:8000/docs) in your browser.
+
 <!--After that, go to the [Wikifier website](https://wikifier.org/register.html) and create a user. Then, copy the key and paste it into the following command:
 
 ```shell
