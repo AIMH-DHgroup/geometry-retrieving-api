@@ -16,7 +16,7 @@ After that, run the API using the command:
 uvicorn main:app
 ```
 
-To access the API web interface, open this link [tab](http://127.0.0.1:8000/docs) in your browser.
+To access the API web interface, open this link [https://127.0.0.1:8000/docs](https://127.0.0.1:8000/docs) in your browser.
 
 <!--After that, go to the [Wikifier website](https://wikifier.org/register.html) and create a user. Then, copy the key and paste it into the following command:
 
@@ -44,8 +44,8 @@ The endpoints are ``/analyze`` and ``/geosparql`` and the latter has the ``downl
 ## Usage Instructions
 ### Input:Text 
 When provided with a text input, GeoLink offers two endpoints for Named Entity Recognition (NER):
-- SpaCy 3.8-based endpoint: https://gel.isti.cnr.it/spacy — uses SpaCy for NER.
-- SpaCy 3.8+Flair endpoint: https://gel.isti.cnr.it/spacy-flair — uses a hybrid SpaCy + Flair model for enhanced entity recognition.
+- SpaCy 3.8-based endpoint: https://127.0.0.1:8000/spacy — uses SpaCy for NER.
+- SpaCy 3.8+Flair endpoint: https://127.0.0.1:8000/spacy-flair — uses a hybrid SpaCy + Flair model for enhanced entity recognition.
 
 To use the API, send a POST request to one of the URLs above, including the text you want to analyze in the request body.
 For example, to analyze the text Paris is the capital city of France, the body of the POST request should contain the following JSON object:  
@@ -54,11 +54,11 @@ For example, to analyze the text Paris is the capital city of France, the body o
 ### Input: GeoNames IRI
 For GeoNames IRIs, GeoLink provides the following endpoint:
 
-- https://gel.isti.cnr.it/iri
+- https://127.0.0.1:8000/iri
 
 To use the API, send a GET request by appending the GeoNames IRI of the entity you want to query to the endpoint URL. 
 For example, to retrieve information for Paris (GeoNames ID 2988507), whose GeoNames page is https://www.geonames.org/2988507/, the URL to load is:
-https://gel.isti.cnr.it/iri?iri=https://www.geonames.org/2988507/
+https://127.0.0.1:8000/iri?iri=https://www.geonames.org/2988507/
 
 ## Evaluation
 ### Input:Text 
