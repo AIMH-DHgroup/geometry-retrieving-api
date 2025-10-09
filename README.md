@@ -1,7 +1,11 @@
 # GeoLinks API
 <!--This API allows to retrieve information about entities in an input text. After the Named-Entity Recognition phase, it uses ``Wikifier`` to disambiguate them, then a SPARQL query is performed to obtain Wikidata and OpenStreetMap IDs. Finally, the geometries are stored in a GeoJSON file.
-Tested with Python 3.9. -->
-GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities. For entities detected from text, the API returns their corresponding coordinates (latitude and longitude) and polygon geometry. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in Geonames. The geographic data are automatically retrieved from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.
+Tested with Python 3.9.
+GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities and enrich them with geospatial information. Indeed, for entities detected from text, the API returns their corresponding coordinates (latitude and longitude) and polygon geometry, as well as the corresponding Wikidata IRI. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in Geonames. The geographic data are automatically retrieved from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.-->
+
+GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities and enrich them with geospatial information. For entities detected from text, the API returns their corresponding coordinates (latitude and longitude), polygon geometry, and the associated Wikidata IRI. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in GeoNames; however, the API retrieves the corresponding polygon geometry and the related Wikidata IRIs. The geographic data are automatically obtained from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.
+
+In conclusion, the API produces a graph of interconnected geographical entities enriched with spatial information.
 
 ## Installation
 Create a Python environment and install the requirements.txt using the command:
