@@ -3,7 +3,7 @@
 Tested with Python 3.9.
 GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities and enrich them with geospatial information. Indeed, for entities detected from text, the API returns their corresponding coordinates (latitude and longitude) and polygon geometry, as well as the corresponding Wikidata IRI. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in Geonames. The geographic data are automatically retrieved from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.-->
 
-GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities and enrich them with geospatial information. For entities detected from text, the API returns their corresponding coordinates (latitude and longitude), polygon geometry, and the associated Wikidata IRI. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in GeoNames; however, the API retrieves the corresponding polygon geometry and the related Wikidata IRIs. The geographic data are automatically obtained from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.
+GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to enrich geographical entities with geospatial information, including an associated Wikidata IRI for each entity. For input text, the API first extracts the geographical entities and then returns their corresponding coordinates (latitude and longitude), polygon geometry, and the associated Wikidata IRI. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in GeoNames; however, the API retrieves the corresponding polygon geometry and the related Wikidata IRIs. The geographic data are automatically obtained from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.
 
 In conclusion, the API produces a graph of interconnected geographical entities enriched with spatial information.
 
@@ -70,7 +70,10 @@ The evaluation of the API is based on a corpus consisting of # narratives, compr
 
 For the evaluation, we created a gold standard composed of # narratives and # events. These numbers were calculated using the sample size determination formula with finite population correction. The gold standard corpus is available in Json format in the file gold_standard.json.
 
-The gold standard was manually annotated, identifying the geographical entities and their corresponding Wikidata IDs. To retrieve the entities and their IDs, we tested several Named Entity Recognition (NER) systems, also in combination with entity linking software. The evaluation metrics (Precision, Recall, and F1) are reported in the following article: XXXX. 
+The gold standard was manually annotated, identifying the geographical entities and their corresponding Wikidata IDs. To retrieve the entities and their IDs, we tested several Named Entity Recognition (NER) systems, also in combination with entity linking software. 
+
+The evaluation metrics (Precision, Recall, and F1) are reported in the following article: XXXX. 
+
 For each retrieved entity associated with a Wikidata ID, we were able to obtain both the geographical coordinates and the polygon geometry. 
 
 The best results were obtained using SpaCy and the combination SpaCy+Flair, which achieved very similar performance for the Named Entity Recognition task, while the retrieval of Wikidata IDs was performed via SPARQL queries to the Wikidata endpoint, leveraging the semantic similarity between the contexts in which the NER-extracted entities appear and their descriptions as reported on Wikidata.
