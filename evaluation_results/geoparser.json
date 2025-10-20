@@ -1,0 +1,2096 @@
+[
+  {
+    "row": 1,
+    "entities": []
+  },
+  {
+    "row": 2,
+    "entities": [
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q1524"
+      }
+    ]
+  },
+  {
+    "row": 3,
+    "entities": [
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      }
+    ]
+  },
+  {
+    "row": 4,
+    "entities": [
+      {
+        "text_label": "Valencia",
+        "Wikidata_ID": "Q8818"
+      },
+      {
+        "text_label": "Valencia",
+        "Wikidata_ID": "Q8818"
+      }
+    ]
+  },
+  {
+    "row": 5,
+    "entities": []
+  },
+  {
+    "row": 6,
+    "entities": [
+      {
+        "text_label": "Cologne",
+        "Wikidata_ID": "Q365"
+      }
+    ]
+  },
+  {
+    "row": 7,
+    "entities": []
+  },
+  {
+    "row": 8,
+    "entities": []
+  },
+  {
+    "row": 9,
+    "entities": [
+      {
+        "text_label": "People's Republic of China",
+        "Wikidata_ID": "Q148"
+      },
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      }
+    ]
+  },
+  {
+    "row": 10,
+    "entities": []
+  },
+  {
+    "row": 11,
+    "entities": []
+  },
+  {
+    "row": 12,
+    "entities": []
+  },
+  {
+    "row": 13,
+    "entities": []
+  },
+  {
+    "row": 14,
+    "entities": []
+  },
+  {
+    "row": 15,
+    "entities": []
+  },
+  {
+    "row": 16,
+    "entities": []
+  },
+  {
+    "row": 17,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      }
+    ]
+  },
+  {
+    "row": 18,
+    "entities": []
+  },
+  {
+    "row": 19,
+    "entities": []
+  },
+  {
+    "row": 20,
+    "entities": [
+      {
+        "text_label": "Limoges",
+        "Wikidata_ID": "Q45656"
+      },
+      {
+        "text_label": "United States",
+        "Wikidata_ID": "Q30"
+      }
+    ]
+  },
+  {
+    "row": 21,
+    "entities": []
+  },
+  {
+    "row": 22,
+    "entities": []
+  },
+  {
+    "row": 23,
+    "entities": []
+  },
+  {
+    "row": 24,
+    "entities": []
+  },
+  {
+    "row": 25,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Cologne",
+        "Wikidata_ID": "Q365"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Cologne",
+        "Wikidata_ID": "Q365"
+      },
+      {
+        "text_label": "Netherlands",
+        "Wikidata_ID": "Q55"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Netherlands",
+        "Wikidata_ID": "Q55"
+      },
+      {
+        "text_label": "United Kingdom",
+        "Wikidata_ID": "Q145"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Berlin",
+        "Wikidata_ID": "Q64"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      }
+    ]
+  },
+  {
+    "row": 26,
+    "entities": []
+  },
+  {
+    "row": 27,
+    "entities": [
+      {
+        "text_label": "Heraklion",
+        "Wikidata_ID": "Q160544"
+      }
+    ]
+  },
+  {
+    "row": 28,
+    "entities": []
+  },
+  {
+    "row": 29,
+    "entities": [
+      {
+        "text_label": "Constantinople",
+        "Wikidata_ID": "Q16869"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "Sitia",
+        "Wikidata_ID": "Q985549"
+      },
+      {
+        "text_label": "Rethymno",
+        "Wikidata_ID": "Q200908"
+      },
+      {
+        "text_label": "Kissamos",
+        "Wikidata_ID": "Q1021629"
+      },
+      {
+        "text_label": "Castelli",
+        "Wikidata_ID": "Q51433"
+      },
+      {
+        "text_label": "Rethymno",
+        "Wikidata_ID": "Q200908"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      }
+    ]
+  },
+  {
+    "row": 30,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q160483"
+      }
+    ]
+  },
+  {
+    "row": 31,
+    "entities": [
+      {
+        "text_label": "Berlin",
+        "Wikidata_ID": "Q64"
+      },
+      {
+        "text_label": "Düsseldorf",
+        "Wikidata_ID": "Q1718"
+      }
+    ]
+  },
+  {
+    "row": 32,
+    "entities": []
+  },
+  {
+    "row": 33,
+    "entities": []
+  },
+  {
+    "row": 34,
+    "entities": []
+  },
+  {
+    "row": 35,
+    "entities": []
+  },
+  {
+    "row": 36,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      }
+    ]
+  },
+  {
+    "row": 37,
+    "entities": []
+  },
+  {
+    "row": 38,
+    "entities": [
+      {
+        "text_label": "Maritsa",
+        "Wikidata_ID": "Q204347"
+      }
+    ]
+  },
+  {
+    "row": 39,
+    "entities": []
+  },
+  {
+    "row": 40,
+    "entities": [
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      },
+      {
+        "text_label": "Limoges",
+        "Wikidata_ID": "Q45656"
+      },
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      },
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      }
+    ]
+  },
+  {
+    "row": 41,
+    "entities": [
+      {
+        "text_label": "France",
+        "Wikidata_ID": "Q142"
+      }
+    ]
+  },
+  {
+    "row": 42,
+    "entities": [
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "Kydonia",
+        "Wikidata_ID": "Q1481525"
+      }
+    ]
+  },
+  {
+    "row": 43,
+    "entities": [
+      {
+        "text_label": "Bulgaria",
+        "Wikidata_ID": "Q219"
+      },
+      {
+        "text_label": "Romania",
+        "Wikidata_ID": "Q218"
+      },
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      },
+      {
+        "text_label": "Serbia",
+        "Wikidata_ID": "Q403"
+      }
+    ]
+  },
+  {
+    "row": 44,
+    "entities": []
+  },
+  {
+    "row": 45,
+    "entities": []
+  },
+  {
+    "row": 46,
+    "entities": [
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "Heraklion",
+        "Wikidata_ID": "Q160544"
+      },
+      {
+        "text_label": "Rethymno",
+        "Wikidata_ID": "Q200908"
+      },
+      {
+        "text_label": "Heraklion",
+        "Wikidata_ID": "Q160544"
+      },
+      {
+        "text_label": "Lasithi Regional Unit",
+        "Wikidata_ID": "Q210450"
+      },
+      {
+        "text_label": "Sitia",
+        "Wikidata_ID": "Q985549"
+      },
+      {
+        "text_label": "Anogeia Municipality",
+        "Wikidata_ID": "Q567511"
+      },
+      {
+        "text_label": "Hora Sfakion",
+        "Wikidata_ID": "Q1076320"
+      }
+    ]
+  },
+  {
+    "row": 47,
+    "entities": []
+  },
+  {
+    "row": 48,
+    "entities": []
+  },
+  {
+    "row": 49,
+    "entities": []
+  },
+  {
+    "row": 50,
+    "entities": [
+      {
+        "text_label": "Central Europe",
+        "Wikidata_ID": "Q27509"
+      }
+    ]
+  },
+  {
+    "row": 51,
+    "entities": [
+      {
+        "text_label": "Limoges",
+        "Wikidata_ID": "Q45656"
+      },
+      {
+        "text_label": "France",
+        "Wikidata_ID": "Q142"
+      },
+      {
+        "text_label": "Limoges",
+        "Wikidata_ID": "Q45656"
+      }
+    ]
+  },
+  {
+    "row": 52,
+    "entities": []
+  },
+  {
+    "row": 53,
+    "entities": []
+  },
+  {
+    "row": 54,
+    "entities": []
+  },
+  {
+    "row": 55,
+    "entities": []
+  },
+  {
+    "row": 56,
+    "entities": []
+  },
+  {
+    "row": 57,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q160483"
+      }
+    ]
+  },
+  {
+    "row": 58,
+    "entities": []
+  },
+  {
+    "row": 59,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q160483"
+      }
+    ]
+  },
+  {
+    "row": 60,
+    "entities": [
+      {
+        "text_label": "Turin",
+        "Wikidata_ID": "Q495"
+      }
+    ]
+  },
+  {
+    "row": 61,
+    "entities": []
+  },
+  {
+    "row": 62,
+    "entities": []
+  },
+  {
+    "row": 63,
+    "entities": [
+      {
+        "text_label": "Portugal",
+        "Wikidata_ID": "Q45"
+      }
+    ]
+  },
+  {
+    "row": 64,
+    "entities": []
+  },
+  {
+    "row": 65,
+    "entities": []
+  },
+  {
+    "row": 66,
+    "entities": []
+  },
+  {
+    "row": 67,
+    "entities": []
+  },
+  {
+    "row": 68,
+    "entities": [
+      {
+        "text_label": "Spain",
+        "Wikidata_ID": "Q29"
+      }
+    ]
+  },
+  {
+    "row": 69,
+    "entities": []
+  },
+  {
+    "row": 70,
+    "entities": []
+  },
+  {
+    "row": 71,
+    "entities": [
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q1524"
+      },
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q1524"
+      }
+    ]
+  },
+  {
+    "row": 72,
+    "entities": []
+  },
+  {
+    "row": 73,
+    "entities": []
+  },
+  {
+    "row": 74,
+    "entities": [
+      {
+        "text_label": "Heraklion",
+        "Wikidata_ID": "Q160544"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "India",
+        "Wikidata_ID": "Q668"
+      },
+      {
+        "text_label": "Iran",
+        "Wikidata_ID": "Q794"
+      },
+      {
+        "text_label": "State of Palestine",
+        "Wikidata_ID": "Q219060"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      }
+    ]
+  },
+  {
+    "row": 75,
+    "entities": [
+      {
+        "text_label": "Fortuna",
+        "Wikidata_ID": "Q1020559"
+      }
+    ]
+  },
+  {
+    "row": 76,
+    "entities": []
+  },
+  {
+    "row": 77,
+    "entities": [
+      {
+        "text_label": "Charlotte",
+        "Wikidata_ID": "Q16565"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      }
+    ]
+  },
+  {
+    "row": 78,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      }
+    ]
+  },
+  {
+    "row": 79,
+    "entities": []
+  },
+  {
+    "row": 80,
+    "entities": []
+  },
+  {
+    "row": 81,
+    "entities": [
+      {
+        "text_label": "Uerdingen",
+        "Wikidata_ID": "Q447973"
+      },
+      {
+        "text_label": "Krefeld Central Station",
+        "Wikidata_ID": "Q472465"
+      }
+    ]
+  },
+  {
+    "row": 82,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      }
+    ]
+  },
+  {
+    "row": 83,
+    "entities": []
+  },
+  {
+    "row": 84,
+    "entities": [
+      {
+        "text_label": "Venice",
+        "Wikidata_ID": "Q641"
+      },
+      {
+        "text_label": "England",
+        "Wikidata_ID": "Q21"
+      }
+    ]
+  },
+  {
+    "row": 85,
+    "entities": []
+  },
+  {
+    "row": 86,
+    "entities": []
+  },
+  {
+    "row": 87,
+    "entities": [
+      {
+        "text_label": "Düsseldorf",
+        "Wikidata_ID": "Q1718"
+      },
+      {
+        "text_label": "Krefeld Central Station",
+        "Wikidata_ID": "Q472465"
+      }
+    ]
+  },
+  {
+    "row": 88,
+    "entities": []
+  },
+  {
+    "row": 89,
+    "entities": [
+      {
+        "text_label": "Majorelle Garden",
+        "Wikidata_ID": "Q1395431"
+      },
+      {
+        "text_label": "Nancy",
+        "Wikidata_ID": "Q40898"
+      }
+    ]
+  },
+  {
+    "row": 90,
+    "entities": [
+      {
+        "text_label": "Genoa",
+        "Wikidata_ID": "Q1449"
+      },
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q748832"
+      },
+      {
+        "text_label": "Foça",
+        "Wikidata_ID": "Q1921294"
+      }
+    ]
+  },
+  {
+    "row": 91,
+    "entities": []
+  },
+  {
+    "row": 92,
+    "entities": [
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q1524"
+      }
+    ]
+  },
+  {
+    "row": 93,
+    "entities": [
+      {
+        "text_label": "Limoges",
+        "Wikidata_ID": "Q45656"
+      },
+      {
+        "text_label": "Limoges",
+        "Wikidata_ID": "Q45656"
+      }
+    ]
+  },
+  {
+    "row": 94,
+    "entities": []
+  },
+  {
+    "row": 95,
+    "entities": [
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      },
+      {
+        "text_label": "Americas",
+        "Wikidata_ID": "Q828"
+      },
+      {
+        "text_label": "India",
+        "Wikidata_ID": "Q668"
+      },
+      {
+        "text_label": "Philippines",
+        "Wikidata_ID": "Q928"
+      }
+    ]
+  },
+  {
+    "row": 96,
+    "entities": [
+      {
+        "text_label": "France",
+        "Wikidata_ID": "Q142"
+      }
+    ]
+  },
+  {
+    "row": 97,
+    "entities": []
+  },
+  {
+    "row": 98,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Mönchengladbach",
+        "Wikidata_ID": "Q2758"
+      }
+    ]
+  },
+  {
+    "row": 99,
+    "entities": []
+  },
+  {
+    "row": 100,
+    "entities": [
+      {
+        "text_label": "Epirus Region",
+        "Wikidata_ID": "Q180484"
+      },
+      {
+        "text_label": "Epirus Region",
+        "Wikidata_ID": "Q180484"
+      },
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      }
+    ]
+  },
+  {
+    "row": 101,
+    "entities": [
+      {
+        "text_label": "Niagara River",
+        "Wikidata_ID": "Q182343"
+      }
+    ]
+  },
+  {
+    "row": 102,
+    "entities": []
+  },
+  {
+    "row": 103,
+    "entities": [
+      {
+        "text_label": "Iraq",
+        "Wikidata_ID": "Q796"
+      }
+    ]
+  },
+  {
+    "row": 104,
+    "entities": []
+  },
+  {
+    "row": 105,
+    "entities": [
+      {
+        "text_label": "Western Europe",
+        "Wikidata_ID": "Q27496"
+      }
+    ]
+  },
+  {
+    "row": 106,
+    "entities": []
+  },
+  {
+    "row": 107,
+    "entities": []
+  },
+  {
+    "row": 108,
+    "entities": []
+  },
+  {
+    "row": 109,
+    "entities": []
+  },
+  {
+    "row": 110,
+    "entities": []
+  },
+  {
+    "row": 111,
+    "entities": [
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      }
+    ]
+  },
+  {
+    "row": 112,
+    "entities": []
+  },
+  {
+    "row": 113,
+    "entities": []
+  },
+  {
+    "row": 114,
+    "entities": []
+  },
+  {
+    "row": 115,
+    "entities": []
+  },
+  {
+    "row": 116,
+    "entities": []
+  },
+  {
+    "row": 117,
+    "entities": []
+  },
+  {
+    "row": 118,
+    "entities": []
+  },
+  {
+    "row": 119,
+    "entities": []
+  },
+  {
+    "row": 120,
+    "entities": []
+  },
+  {
+    "row": 121,
+    "entities": [
+      {
+        "text_label": "Lancashire",
+        "Wikidata_ID": "Q23077"
+      }
+    ]
+  },
+  {
+    "row": 122,
+    "entities": []
+  },
+  {
+    "row": 123,
+    "entities": []
+  },
+  {
+    "row": 124,
+    "entities": []
+  },
+  {
+    "row": 125,
+    "entities": []
+  },
+  {
+    "row": 126,
+    "entities": [
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      },
+      {
+        "text_label": "New York City Hall",
+        "Wikidata_ID": "Q1065206"
+      }
+    ]
+  },
+  {
+    "row": 127,
+    "entities": []
+  },
+  {
+    "row": 128,
+    "entities": []
+  },
+  {
+    "row": 129,
+    "entities": [
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Heraklion",
+        "Wikidata_ID": "Q160544"
+      },
+      {
+        "text_label": "Rethymno",
+        "Wikidata_ID": "Q200908"
+      },
+      {
+        "text_label": "Kydonia",
+        "Wikidata_ID": "Q1481525"
+      },
+      {
+        "text_label": "Sitia",
+        "Wikidata_ID": "Q985549"
+      },
+      {
+        "text_label": "Souda",
+        "Wikidata_ID": "Q2532466"
+      },
+      {
+        "text_label": "Kissamos",
+        "Wikidata_ID": "Q1021629"
+      }
+    ]
+  },
+  {
+    "row": 130,
+    "entities": []
+  },
+  {
+    "row": 131,
+    "entities": [
+      {
+        "text_label": "Bavaria",
+        "Wikidata_ID": "Q980"
+      },
+      {
+        "text_label": "Lech",
+        "Wikidata_ID": "Q567731"
+      },
+      {
+        "text_label": "Ingolstadt",
+        "Wikidata_ID": "Q3004"
+      },
+      {
+        "text_label": "Upper Bavaria",
+        "Wikidata_ID": "Q10562"
+      }
+    ]
+  },
+  {
+    "row": 132,
+    "entities": [
+      {
+        "text_label": "Chicago",
+        "Wikidata_ID": "Q1297"
+      },
+      {
+        "text_label": "United States",
+        "Wikidata_ID": "Q30"
+      },
+      {
+        "text_label": "United States",
+        "Wikidata_ID": "Q30"
+      }
+    ]
+  },
+  {
+    "row": 133,
+    "entities": []
+  },
+  {
+    "row": 134,
+    "entities": [
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      },
+      {
+        "text_label": "Smethwick",
+        "Wikidata_ID": "Q1018565"
+      }
+    ]
+  },
+  {
+    "row": 135,
+    "entities": []
+  },
+  {
+    "row": 136,
+    "entities": []
+  },
+  {
+    "row": 137,
+    "entities": []
+  },
+  {
+    "row": 138,
+    "entities": [
+      {
+        "text_label": "Constantinople",
+        "Wikidata_ID": "Q16869"
+      },
+      {
+        "text_label": "Peloponnese Region",
+        "Wikidata_ID": "Q202484"
+      },
+      {
+        "text_label": "Cyprus",
+        "Wikidata_ID": "Q229"
+      },
+      {
+        "text_label": "Anatolia",
+        "Wikidata_ID": "Q51614"
+      }
+    ]
+  },
+  {
+    "row": 139,
+    "entities": []
+  },
+  {
+    "row": 140,
+    "entities": []
+  },
+  {
+    "row": 141,
+    "entities": []
+  },
+  {
+    "row": 142,
+    "entities": []
+  },
+  {
+    "row": 143,
+    "entities": [
+      {
+        "text_label": "Bruges",
+        "Wikidata_ID": "Q12994"
+      },
+      {
+        "text_label": "Belgium",
+        "Wikidata_ID": "Q31"
+      }
+    ]
+  },
+  {
+    "row": 144,
+    "entities": []
+  },
+  {
+    "row": 145,
+    "entities": []
+  },
+  {
+    "row": 146,
+    "entities": []
+  },
+  {
+    "row": 147,
+    "entities": []
+  },
+  {
+    "row": 148,
+    "entities": []
+  },
+  {
+    "row": 149,
+    "entities": []
+  },
+  {
+    "row": 150,
+    "entities": []
+  },
+  {
+    "row": 151,
+    "entities": [
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      },
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      },
+      {
+        "text_label": "New York",
+        "Wikidata_ID": "Q1384"
+      }
+    ]
+  },
+  {
+    "row": 152,
+    "entities": [
+      {
+        "text_label": "Mount Athos",
+        "Wikidata_ID": "Q130321"
+      }
+    ]
+  },
+  {
+    "row": 153,
+    "entities": [
+      {
+        "text_label": "Alexandria",
+        "Wikidata_ID": "Q87"
+      },
+      {
+        "text_label": "Egypt",
+        "Wikidata_ID": "Q79"
+      }
+    ]
+  },
+  {
+    "row": 154,
+    "entities": []
+  },
+  {
+    "row": 155,
+    "entities": [
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q1524"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      }
+    ]
+  },
+  {
+    "row": 156,
+    "entities": []
+  },
+  {
+    "row": 157,
+    "entities": []
+  },
+  {
+    "row": 158,
+    "entities": [
+      {
+        "text_label": "Germany",
+        "Wikidata_ID": "Q183"
+      }
+    ]
+  },
+  {
+    "row": 159,
+    "entities": []
+  },
+  {
+    "row": 160,
+    "entities": [
+      {
+        "text_label": "Athens",
+        "Wikidata_ID": "Q3292481"
+      }
+    ]
+  },
+  {
+    "row": 161,
+    "entities": []
+  },
+  {
+    "row": 162,
+    "entities": [
+      {
+        "text_label": "Epirus Region",
+        "Wikidata_ID": "Q180484"
+      },
+      {
+        "text_label": "Thessaly",
+        "Wikidata_ID": "Q166919"
+      },
+      {
+        "text_label": "Italy",
+        "Wikidata_ID": "Q38"
+      },
+      {
+        "text_label": "Rome",
+        "Wikidata_ID": "Q220"
+      }
+    ]
+  },
+  {
+    "row": 163,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q160483"
+      }
+    ]
+  },
+  {
+    "row": 164,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q160483"
+      }
+    ]
+  },
+  {
+    "row": 165,
+    "entities": []
+  },
+  {
+    "row": 166,
+    "entities": []
+  },
+  {
+    "row": 167,
+    "entities": []
+  },
+  {
+    "row": 168,
+    "entities": [
+      {
+        "text_label": "Spain",
+        "Wikidata_ID": "Q29"
+      }
+    ]
+  },
+  {
+    "row": 169,
+    "entities": [
+      {
+        "text_label": "Paris",
+        "Wikidata_ID": "Q90"
+      }
+    ]
+  },
+  {
+    "row": 170,
+    "entities": []
+  },
+  {
+    "row": 171,
+    "entities": [
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      },
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      },
+      {
+        "text_label": "Germany",
+        "Wikidata_ID": "Q183"
+      },
+      {
+        "text_label": "Belgium",
+        "Wikidata_ID": "Q31"
+      },
+      {
+        "text_label": "Netherlands",
+        "Wikidata_ID": "Q55"
+      }
+    ]
+  },
+  {
+    "row": 172,
+    "entities": [
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      }
+    ]
+  },
+  {
+    "row": 173,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q748832"
+      }
+    ]
+  },
+  {
+    "row": 174,
+    "entities": [
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      },
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      },
+      {
+        "text_label": "Rome",
+        "Wikidata_ID": "Q220"
+      }
+    ]
+  },
+  {
+    "row": 175,
+    "entities": []
+  },
+  {
+    "row": 176,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Belgrade",
+        "Wikidata_ID": "Q3711"
+      },
+      {
+        "text_label": "Venice",
+        "Wikidata_ID": "Q641"
+      },
+      {
+        "text_label": "Bucharest",
+        "Wikidata_ID": "Q19660"
+      },
+      {
+        "text_label": "Prague",
+        "Wikidata_ID": "Q1085"
+      },
+      {
+        "text_label": "Vienna",
+        "Wikidata_ID": "Q1741"
+      },
+      {
+        "text_label": "Skopje",
+        "Wikidata_ID": "Q384"
+      },
+      {
+        "text_label": "Russia",
+        "Wikidata_ID": "Q159"
+      },
+      {
+        "text_label": "Venice",
+        "Wikidata_ID": "Q641"
+      },
+      {
+        "text_label": "Constantinople",
+        "Wikidata_ID": "Q16869"
+      }
+    ]
+  },
+  {
+    "row": 177,
+    "entities": []
+  },
+  {
+    "row": 178,
+    "entities": [
+      {
+        "text_label": "Rhodes",
+        "Wikidata_ID": "Q188731"
+      }
+    ]
+  },
+  {
+    "row": 179,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Jerusalem",
+        "Wikidata_ID": "Q1218"
+      },
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      }
+    ]
+  },
+  {
+    "row": 180,
+    "entities": []
+  },
+  {
+    "row": 181,
+    "entities": []
+  },
+  {
+    "row": 182,
+    "entities": [
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      },
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      },
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      },
+      {
+        "text_label": "Baghdad",
+        "Wikidata_ID": "Q1530"
+      },
+      {
+        "text_label": "State of Palestine",
+        "Wikidata_ID": "Q219060"
+      },
+      {
+        "text_label": "Constantinople",
+        "Wikidata_ID": "Q16869"
+      },
+      {
+        "text_label": "Spain",
+        "Wikidata_ID": "Q29"
+      },
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      }
+    ]
+  },
+  {
+    "row": 183,
+    "entities": [
+      {
+        "text_label": "Heraklion",
+        "Wikidata_ID": "Q160544"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      }
+    ]
+  },
+  {
+    "row": 184,
+    "entities": [
+      {
+        "text_label": "United Kingdom",
+        "Wikidata_ID": "Q145"
+      }
+    ]
+  },
+  {
+    "row": 185,
+    "entities": []
+  },
+  {
+    "row": 186,
+    "entities": []
+  },
+  {
+    "row": 187,
+    "entities": []
+  },
+  {
+    "row": 188,
+    "entities": []
+  },
+  {
+    "row": 189,
+    "entities": [
+      {
+        "text_label": "Bruges",
+        "Wikidata_ID": "Q12994"
+      },
+      {
+        "text_label": "Belgium",
+        "Wikidata_ID": "Q31"
+      },
+      {
+        "text_label": "Krefeld",
+        "Wikidata_ID": "Q2805"
+      }
+    ]
+  },
+  {
+    "row": 190,
+    "entities": []
+  },
+  {
+    "row": 191,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Calais",
+        "Wikidata_ID": "Q6454"
+      }
+    ]
+  },
+  {
+    "row": 192,
+    "entities": []
+  },
+  {
+    "row": 193,
+    "entities": [
+      {
+        "text_label": "Empire",
+        "Wikidata_ID": "Q2471770"
+      }
+    ]
+  },
+  {
+    "row": 194,
+    "entities": []
+  },
+  {
+    "row": 195,
+    "entities": [
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      },
+      {
+        "text_label": "Kiruna",
+        "Wikidata_ID": "Q83232"
+      },
+      {
+        "text_label": "Tunisia",
+        "Wikidata_ID": "Q948"
+      },
+      {
+        "text_label": "Genoa",
+        "Wikidata_ID": "Q1449"
+      },
+      {
+        "text_label": "Africa",
+        "Wikidata_ID": "Q15"
+      },
+      {
+        "text_label": "Porto Venere",
+        "Wikidata_ID": "Q188315"
+      },
+      {
+        "text_label": "Genoa",
+        "Wikidata_ID": "Q1449"
+      },
+      {
+        "text_label": "Vercelli",
+        "Wikidata_ID": "Q5990"
+      },
+      {
+        "text_label": "Alps",
+        "Wikidata_ID": "Q1286"
+      },
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      }
+    ]
+  },
+  {
+    "row": 196,
+    "entities": []
+  },
+  {
+    "row": 197,
+    "entities": []
+  },
+  {
+    "row": 198,
+    "entities": [
+      {
+        "text_label": "France",
+        "Wikidata_ID": "Q142"
+      }
+    ]
+  },
+  {
+    "row": 199,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Epirus Region",
+        "Wikidata_ID": "Q180484"
+      },
+      {
+        "text_label": "Athamanika",
+        "Wikidata_ID": "Q754695"
+      },
+      {
+        "text_label": "Konitsa",
+        "Wikidata_ID": "Q1014221"
+      },
+      {
+        "text_label": "Metsovo",
+        "Wikidata_ID": "Q985630"
+      },
+      {
+        "text_label": "Altare",
+        "Wikidata_ID": "Q270504"
+      },
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      },
+      {
+        "text_label": "Italy",
+        "Wikidata_ID": "Q38"
+      }
+    ]
+  },
+  {
+    "row": 200,
+    "entities": []
+  },
+  {
+    "row": 201,
+    "entities": []
+  },
+  {
+    "row": 202,
+    "entities": []
+  },
+  {
+    "row": 203,
+    "entities": [
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q748832"
+      }
+    ]
+  },
+  {
+    "row": 204,
+    "entities": [
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      }
+    ]
+  },
+  {
+    "row": 205,
+    "entities": [
+      {
+        "text_label": "Genoa",
+        "Wikidata_ID": "Q1449"
+      },
+      {
+        "text_label": "Anatolia",
+        "Wikidata_ID": "Q51614"
+      },
+      {
+        "text_label": "Genoa",
+        "Wikidata_ID": "Q1449"
+      },
+      {
+        "text_label": "Chios",
+        "Wikidata_ID": "Q748832"
+      }
+    ]
+  },
+  {
+    "row": 206,
+    "entities": [
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      }
+    ]
+  },
+  {
+    "row": 207,
+    "entities": []
+  },
+  {
+    "row": 208,
+    "entities": []
+  },
+  {
+    "row": 209,
+    "entities": [
+      {
+        "text_label": "Murcia",
+        "Wikidata_ID": "Q12225"
+      }
+    ]
+  },
+  {
+    "row": 210,
+    "entities": []
+  },
+  {
+    "row": 211,
+    "entities": [
+      {
+        "text_label": "Anatolia",
+        "Wikidata_ID": "Q51614"
+      },
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      },
+      {
+        "text_label": "France",
+        "Wikidata_ID": "Q142"
+      },
+      {
+        "text_label": "England",
+        "Wikidata_ID": "Q21"
+      },
+      {
+        "text_label": "Cyprus",
+        "Wikidata_ID": "Q229"
+      },
+      {
+        "text_label": "Germany",
+        "Wikidata_ID": "Q183"
+      },
+      {
+        "text_label": "Romania",
+        "Wikidata_ID": "Q218"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Asia",
+        "Wikidata_ID": "Q48"
+      },
+      {
+        "text_label": "Turkey",
+        "Wikidata_ID": "Q43"
+      },
+      {
+        "text_label": "Lebanon",
+        "Wikidata_ID": "Q822"
+      },
+      {
+        "text_label": "Syria",
+        "Wikidata_ID": "Q858"
+      },
+      {
+        "text_label": "Iraq",
+        "Wikidata_ID": "Q796"
+      },
+      {
+        "text_label": "India",
+        "Wikidata_ID": "Q668"
+      },
+      {
+        "text_label": "Egypt",
+        "Wikidata_ID": "Q79"
+      },
+      {
+        "text_label": "Morocco",
+        "Wikidata_ID": "Q1028"
+      },
+      {
+        "text_label": "Tunisia",
+        "Wikidata_ID": "Q948"
+      },
+      {
+        "text_label": "Algeria",
+        "Wikidata_ID": "Q262"
+      }
+    ]
+  },
+  {
+    "row": 212,
+    "entities": []
+  },
+  {
+    "row": 213,
+    "entities": [
+      {
+        "text_label": "Australia",
+        "Wikidata_ID": "Q408"
+      }
+    ]
+  },
+  {
+    "row": 214,
+    "entities": []
+  },
+  {
+    "row": 215,
+    "entities": []
+  },
+  {
+    "row": 216,
+    "entities": [
+      {
+        "text_label": "Constantinople",
+        "Wikidata_ID": "Q16869"
+      },
+      {
+        "text_label": "Turkey",
+        "Wikidata_ID": "Q43"
+      },
+      {
+        "text_label": "Thessaloniki",
+        "Wikidata_ID": "Q17151"
+      },
+      {
+        "text_label": "Greece",
+        "Wikidata_ID": "Q41"
+      },
+      {
+        "text_label": "Turkey",
+        "Wikidata_ID": "Q43"
+      }
+    ]
+  },
+  {
+    "row": 217,
+    "entities": [
+      {
+        "text_label": "Europe",
+        "Wikidata_ID": "Q46"
+      }
+    ]
+  },
+  {
+    "row": 218,
+    "entities": []
+  },
+  {
+    "row": 219,
+    "entities": [
+      {
+        "text_label": "Crete",
+        "Wikidata_ID": "Q34374"
+      }
+    ]
+  },
+  {
+    "row": 220,
+    "entities": [
+      {
+        "text_label": "Murcia",
+        "Wikidata_ID": "Q12225"
+      }
+    ]
+  },
+  {
+    "row": 221,
+    "entities": []
+  },
+  {
+    "row": 222,
+    "entities": [
+      {
+        "text_label": "Cromford",
+        "Wikidata_ID": "Q1000915"
+      }
+    ]
+  },
+  {
+    "row": 223,
+    "entities": []
+  },
+  {
+    "row": 224,
+    "entities": []
+  },
+  {
+    "row": 225,
+    "entities": []
+  },
+  {
+    "row": 226,
+    "entities": []
+  },
+  {
+    "row": 227,
+    "entities": []
+  },
+  {
+    "row": 228,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      }
+    ]
+  },
+  {
+    "row": 229,
+    "entities": [
+      {
+        "text_label": "Aachen",
+        "Wikidata_ID": "Q1017"
+      }
+    ]
+  },
+  {
+    "row": 230,
+    "entities": []
+  },
+  {
+    "row": 231,
+    "entities": []
+  },
+  {
+    "row": 232,
+    "entities": []
+  },
+  {
+    "row": 233,
+    "entities": []
+  },
+  {
+    "row": 234,
+    "entities": []
+  },
+  {
+    "row": 235,
+    "entities": [
+      {
+        "text_label": "Rochdale",
+        "Wikidata_ID": "Q474605"
+      },
+      {
+        "text_label": "England",
+        "Wikidata_ID": "Q21"
+      }
+    ]
+  },
+  {
+    "row": 236,
+    "entities": [
+      {
+        "text_label": "Ioannina",
+        "Wikidata_ID": "Q183199"
+      }
+    ]
+  },
+  {
+    "row": 237,
+    "entities": []
+  }
+]
