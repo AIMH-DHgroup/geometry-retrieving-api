@@ -1,7 +1,7 @@
 # GeoLinks API
 <!--This API allows to retrieve information about entities in an input text. After the Named-Entity Recognition phase, it uses ``Wikifier`` to disambiguate them, then a SPARQL query is performed to obtain Wikidata and OpenStreetMap IDs. Finally, the geometries are stored in a GeoJSON file.
 Tested with Python 3.9. -->
-GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities. For entities detected from text, the API returns their corresponding coordinates (latitude and longitude) and polygon geometry. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in Geonames. The geographic data are automatically retrieved from Wikidata and OpenStreetMap, and the results are provided in JSON-LD format.
+GeoLinks is a multilingual API that processes either an input text or a GeoNames IRI to identify geographical entities. For entities detected from text, the API returns their corresponding coordinates (latitude and longitude) and polygon geometry. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in Geonames. The geographic data are automatically retrieved from Wikidata and OpenStreetMap, and the results are provided as a GeoSPARQL knowledge graph in JSON-LD format.
 
 ## Installation
 Create a Python environment and install the requirements.txt using the command:
