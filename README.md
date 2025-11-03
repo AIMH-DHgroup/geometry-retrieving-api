@@ -54,19 +54,20 @@ https://gel.isti.cnr.it/iri?iri=https://www.geonames.org/2988507/
 
 ## Evaluation
 ### Input:Text 
-The evaluation of the API is based on a corpus consisting of # narratives, comprising a total of # events, created within the Horizon Europe Craeft project (https://www.craeft.eu/). The narratives and events were retrieved via the SPARQL endpoint of the project platform and are available in the file Craeft_corpus.txt.
+The evaluation of the API is based on a corpus consisting of 678 events, created within the Horizon Europe Craeft project (https://www.craeft.eu/). The events were retrieved via the SPARQL endpoint of the project platform and are available in the file [Creaeft_event_corpus.csv](data/Creaeft_event_corpus.csv).
 
-For the evaluation, we created a gold standard composed of # narratives and # events. These numbers were calculated using the sample size determination formula with finite population correction. The gold standard corpus is available in Json format in the file gold_standard.json.
+For the evaluation, we created a gold standard composed of 237 events. These numbers were calculated using the sample size determination formula with finite population correction. The gold standard corpus is available in Json format in the file [gold-standard.json](data
+/gold_standard_geographic_entities/gold-standard.json). 
 
-The gold standard was manually annotated, identifying the geographical entities and their corresponding Wikidata IDs. To retrieve the entities and their IDs, we tested several Named Entity Recognition (NER) systems, also in combination with entity linking software. The evaluation metrics (Precision, Recall, and F1) are reported in the following article: XXXX. 
+The gold standard was manually annotated, identifying the geographical entities and their corresponding Wikidata IDs. To retrieve the entities and their IDs, we tested several Named Entity Recognition (NER) systems, also in combination with entity linking software. The evaluation metrics (Precision, Recall, and F1) are reported in the following article: [https://zenodo.org/records/17422250](https://zenodo.org/records/17422250). 
 For each retrieved entity associated with a Wikidata ID, we were able to obtain both the geographical coordinates and the polygon geometry. 
 
 The best results were obtained using SpaCy and the combination SpaCy+Flair, which achieved very similar performance for the Named Entity Recognition task, while the retrieval of Wikidata IDs was performed via SPARQL queries to the Wikidata endpoint, leveraging the semantic similarity between the contexts in which the NER-extracted entities appear and their descriptions as reported on Wikidata.
 
 ### Input:Geonames IRI 
-In the Craeft corpus, the narratives were associated with metadata, including some GeoNames IRIs for certain geographical entities. These IRIs were extracted and used as input for the corresponding API endpoint. We evaluated the percentage of entities for which the API was able to correctly associate a polygon. 
+In the Craeft corpus, the narratives were associated with metadata, including some GeoNames IRIs for certain geographical entities. These IRIs were extracted and used as input for the corresponding API endpoint. We evaluated the percentage of entities for which the API was able to correctly associate a polygon. The API was tested on 459 IRIs of places extracted from the Craeft knowledge base. The list of IRIs is available in the file [Geonames_IRI_corpus.csv](data/Geonames_IRI_corpus.csv).
 
-The results are reported in the following article: XXXX.
+The results are reported in the following article: [https://zenodo.org/records/17422250](https://zenodo.org/records/17422250).
 
 ## Supported Languages
 The list was taken by Spacy documentation: "en" (English - UK), "it" (Italian), "de" (German), "fr" (French - France), "es" (Spanish - Spain), "ru" (Russian), "pl" (Polish), "pt" (Portuguese - Portugal) and "gr", etc.
