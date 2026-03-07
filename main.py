@@ -1,4 +1,4 @@
-# ======= Import libraries =======
+# ======= Import libraries =======  
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
@@ -31,7 +31,8 @@ import sys
 import traceback
 import tempfile
 import zipfile
-
+from typing import Dict, List, Optional, Tuple
+ 
 # ======= Logger =======
 
 # Logger config
@@ -60,67 +61,245 @@ if not logger.hasHandlers():
 class WikipediaRateLimitException(Exception):
     pass
 
-GEOSPARQL_CONTEXT = {
-    "@context": {
-        "geo":        "https://www.opengis.net/ont/geosparql#",
-        "schema":     "https://schema.org/",
-        "xsd":        "http://www.w3.org/2001/XMLSchema#",
-        "label":      "schema:name",
-        "description":"schema:description",
-        "qid":        "schema:identifier",
-        "wikidata":   "schema:sameAs",
-        "osm_id":     "schema:identifier",
-        "Feature":    "geo:Feature",
-        "Geometry":   "geo:Geometry",
-        "hasGeometry":"geo:hasGeometry",
-        "asWKT": {
-            "@id": "geo:asWKT",
-            "@type": "geo:wktLiteral"
-        }
-    }
-}
 
-SUPPORTED_LANGUAGES = ["en", "it", "de", "fr", "es", "pt", "nl", "ru", "pl", "xx"]  # official Wikifier supported languages
 
-WIKIFIER_API_KEY = "xlwepdphbtmqmnyjysnyeubopqovgm"
-
-not_supported_message = "Language not supported. Please insert one value among \'en\' (English), \'it\' (Italian), \'fr\' (French), \'de\' (Deutsch), \'ru\' (Russian), \'pt\' (Portuguese), \'es\' (Spanish), \'nl\' (Dutch) , \'pl\' (Polish) or \'xx\' (for multi language texts)."
+# tags_metadata = [
+    # {
+        # "name": "GeoLinks",
+        # "description": "These endpoints are the most performant and should be used by users and for demonstrations.",
+    # },
+    # {
+        # "name": "Test",
+        # "description": "These endpoints are under development and have been used for testing and experiments.",
+    # },
+    # {
+        # "name": "Old GeoLinks",
+        # "description": "These endpoints use an older version of the algorithm: the entity linking simply involves searching Wikidata for the corresponding entity, always taking the first result. The limitations are obvious.",
+    # },
+# ]
 
 tags_metadata = [
     {
-        "name": "GeoLinks",
-        "description": "These endpoints are the most performant and should be used by users and for demonstrations.",
-    },
-    {
-        "name": "Test",
-        "description": "These endpoints are under development and have been used for testing and experiments.",
-    },
-    {
-        "name": "Old GeoLinks",
-        "description": "These endpoints use an older version of the algorithm: the entity linking simply involves searching Wikidata for the corresponding entity, always taking the first result. The limitations are obvious.",
-    },
+        "name": "GeoLinks API Functionality",
+        "description": "",
+    }
 ]
 
 app = FastAPI(
     title="GeoLinks API",     # docs title
-    description="""GeoLink is a powerful API designed to analyze input text and extract detailed information about geographical or other domain-specific entities.
+    # description="""GeoLink is a powerful API designed to analyze input text and extract detailed information about geographical or other domain-specific entities.
  
-### Features
+# ### Features
  
-- **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
-- **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
-- **Flexible Usage**: Supports both batch processing and real-time requests.
+# - **Entity Detection**: Identifies entities embedded within arbitrary text inputs.
+# - **Rich Contextual Data**: Returns descriptive metadata for each recognized entity, including classification, geolocation (when applicable), and standardized identifiers.
+# - **Flexible Usage**: Supports both batch processing and real-time requests.
  
-### Use Cases
+# ### Use Cases
  
-1. Annotating place names and linking to knowledge bases.
-2. Enriching text with geo-context for mapping or GIS applications.
-3. Enabling advanced search by entity attributes within natural language content.""",
+# 1. Annotating place names and linking to knowledge bases.
+# 2. Enriching text with geo-context for mapping or GIS applications.
+# 3. Enabling advanced search by entity attributes within natural language content.""",
+description="""**GeoLinks** is a [multilingual](https://spacy.io/usage/models) API that processes either a **text** or a **GeoNames IRI** to enrich geographical entities with geospatial information, including an associated **Wikidata IRI** for each entity. For input text, the API first extracts the geographical entities and then returns their corresponding coordinates (latitude and longitude), polygon geometry, and the associated Wikidata IRI. For entities provided as GeoNames IRIs, coordinates are not retrieved since this information is already available in GeoNames; however, the API retrieves the corresponding polygon geometry and the related Wikidata IRIs. The geographic data are automatically obtained from **Wikidata** and **OpenStreetMap**, and the results are provided in JSON-LD format.
+ 
+In conclusion, the API produces a **GeoSPARQL** graph of interconnected geographical entities enriched with spatial information.
+
+The API code is open-source and available at the following link: [https://github.com/AIMH-DHgroup/geometry-retrieving-api](https://github.com/AIMH-DHgroup/geometry-retrieving-api)
+
+ ### Input: Text
+
+When provided with a text input, GeoLink offers two endpoints for Named Entity Recognition (NER):
+
+- **SpaCy 3.8-based  endpoint**: <code>https://gel.isti.cnr.it/spacy</code> — uses [SpaCy](https://spacy.io/) for NER.
+
+- **SpaCy 3.8+Flair endpoint**: <code>https://gel.isti.cnr.it/spacy-flair</code> — uses a hybrid SpaCy + [Flair](https://github.com/flairNLP/flair) model for enhanced entity recognition.
+
+**Usage Instructions** 
+
+To use the API, send a POST request to one of the URLs above, including the text you want to analyze in the request body.
+
+For example, to analyze the text <code>Paris is the capital city of France</code>, the body of the POST request should contain the following JSON object:
+
+<code>{ "text": "Paris is the capital city of France." }</code>
+
+**Results** 
+
+The results are returned in a JSON-LD file, having the following structure:
+
+<div style="display:inline-block; background-color:#f6f8fa; padding:10px; border-radius:6px;">
+<pre><code>{
+  "@context": {
+    "geo": "https://www.opengis.net/ont/geosparql#",
+    "schema": "https://schema.org/"
+  },
+  "@graph": [
+    {
+      "@id": "https://wikidata.org/entity/Q90",
+      "@type": "geo:Feature",
+      "schema:name": "Paris",
+      "geo:hasGeometry": [
+        {
+          "@id": "wd:Q90-geom-point",
+          "@type": "geo:Geometry",
+          "asWKT": "SRID=4326;POINT (2.352222222 48.856666666)"
+        },
+        {
+          "@id": "wd:Q90-geom-polygon",
+          "@type": "geo:Geometry",
+          "geo:asWKT": "SRID=4326;MULTIPOLYGON (((2.3198901 48.9004581, ... )))
+        }
+      ]
+    },
+    {
+      "@id": "https://wikidata.org/entity/Q142",
+      "@type": "geo:Feature", 
+      "schema:name": "France",
+      "geo:hasGeometry": [
+        {
+          "@id": "wd:Q142-geom-point",
+          "@type": "geo:Geometry",
+          "asWKT": "SRID=4326;POINT (2.0 47.0)"
+        },
+        {
+          "@id": "wd:Q142-geom-polygon",
+          "@type": "geo:Geometry",
+          "geo:asWKT": "SRID=4326;MULTIPOLYGON (((6.8700721 45.8284379, ... )))
+        }
+      ]
+    }
+  ]
+}</code></pre>
+    </div>
+
+### Input: GeoNames IRI
+
+For GeoNames IRIs, GeoLink provides the following endpoint:
+
+<code>https://gel.isti.cnr.it/iri</code>
+
+**Usage Instructions** 
+
+To use the API, send a GET request by appending the GeoNames IRI of the entity you want to query to the endpoint URL.
+
+For example, to retrieve information for Paris (GeoNames ID 2988507), whose GeoNames page is <code>https://www.geonames.org/2988507/</code>,
+the URL to load is:
+
+<code>https://gel.isti.cnr.it/iri?iri=https://www.geonames.org/2988507/</code>
+
+**Results**
+
+The results are returned in a JSON-LD file, having the following structure:
+
+<div style="display:inline-block; background-color:#f6f8fa; padding:10px; border-radius:6px;">
+<pre><code>{
+      "@context": {
+          "geo": "https://www.opengis.net/ont/geosparql#",
+          "schema": "https://schema.org/"
+      },
+      "@graph": [
+        {
+          "@id": "https://www.wikidata.org/entity/Q90",
+          "@type": "geo:Feature",
+          "schema:name": "Paris",
+          "geo:hasGeometry": [
+             {
+               "@id": "wd:Q90-geom-point",
+               "@type": "geo:Geometry",
+               "asWKT": "SRID=4326;POINT (2.352222222 48.856666666)"
+             },
+             {
+               "@id": "wd:Q90-geom-polygon",
+               "@type": "geo:Geometry",
+               "geo:asWKT": "SRID=4326;MULTIPOLYGON (((2.3198901 48.9004581, ... )))"
+             } 
+          ]          
+        }
+     ]
+}</code></pre>
+    </div>
+""",
     version="1.0.0",
     docs_url="/docs",         # URL Swagger
     redoc_url="/redoc",       # URL ReDoc
-    openapi_tags=tags_metadata
+    openapi_tags=tags_metadata,
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1  # 👈 nasconde completamente la sezione "Schemas"
+    }
 )
+
+    
+    
+# ======= FastAPI endpoints =======
+
+# redirect from root to /docs
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
+
+
+     
+        
+        
+
+###SPACY 
+
+
+QUERY_COUNTER = {
+    "wikidata_sparql": 0,
+    "wikidata_api": 0,
+    "qlever_osm": 0
+}
+
+TIME_STATS = {
+    "spacy_ner_total": [],
+    "tokenize_text": [],
+    "extract_geo_entity": [],
+    "wikidata_sparql": [],
+    "wikidata_api": [],
+    "qlever_osm": [],
+    "choose_best": [],
+    "entity_total": []
+}
+
+def add_timing(key: str, elapsed: float):
+    if key not in TIME_STATS:
+        TIME_STATS[key] = []
+    TIME_STATS[key].append(elapsed)
+
+def print_query_stats():
+    total = sum(QUERY_COUNTER.values())
+    print("\n============================")
+    print("API QUERY STATS")
+    print("============================")
+    print(f"Wikidata SPARQL queries : {QUERY_COUNTER['wikidata_sparql']}")
+    print(f"Wikidata API queries    : {QUERY_COUNTER['wikidata_api']}")
+    print(f"QLever OSM queries      : {QUERY_COUNTER['qlever_osm']}")
+    print(f"TOTAL HTTP queries      : {total}")
+    print("============================\n")
+
+def print_timing_stats():
+    print("\n============================")
+    print("API TIMING STATS")
+    print("============================")
+
+    for key, values in TIME_STATS.items():
+        if values:
+            total = sum(values)
+            avg = total / len(values)
+            min_v = min(values)
+            max_v = max(values)
+            print(
+                f"{key:20} "
+                f"count={len(values):3d}  "
+                f"total={total:8.3f}s  "
+                f"avg={avg:7.3f}s  "
+                f"min={min_v:7.3f}s  "
+                f"max={max_v:7.3f}s"
+            )
+
+    print("============================\n")
+
+
 
 SPACY_MODELS = {
     "en": "en_core_web_trf",
@@ -132,590 +311,287 @@ SPACY_MODELS = {
     "nl": "nl_core_news_sm",
     "ru": "ru_core_news_sm",
     "pl": "pl_core_news_sm",
-    "xx": "xx_ent_wiki_sm" # multilanguage
+    "el": "el_core_news_sm",
+    "xx": "xx_ent_wiki_sm"
 }
 
-loaded_models = {}
+loaded_models: Dict[str, any] = {}
 
-#WIKIFIER_API_KEY = os.getenv("WIKIFIER_API_KEY")
-#if not WIKIFIER_API_KEY:
-#    raise EnvironmentError("WIKIFIER_API_KEY not defined in environment.")
+GEOSPARQL_CONTEXT = {
+    "@context": {
+        "geo": "https://www.opengis.net/ont/geosparql#",
+        "schema": "https://schema.org/",
+    }
+}
+
+sentence_model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+
+WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql"
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+HTTP_HEADERS = {
+    "Accept": "application/sparql-results+json",
+    "User-Agent": "GeoEntityLinker/1.0 (aimhdhgroup@gmail.com)"
+}
 
 
-# ======= Pydantic model =======
-class TextInput(BaseModel):
-    text: str
-    lang: Optional[str] = "en"
+def get_spacy_model(lang: str = "en"):
+    if lang not in SPACY_MODELS:
+        print(f"⚠️ Unsupported language '{lang}'. Falling back to English.")
+        lang = "en"
 
+    model_name = SPACY_MODELS[lang]
 
-# ======= Utility functions =======
-
-def get_spacy_model(lang="en"):
-    model_name = SPACY_MODELS.get(lang, "en_core_web_trf")
     if model_name not in loaded_models:
         try:
             loaded_models[model_name] = spacy.load(model_name)
         except OSError:
-            print(f"⚠️ spaCy model '{model_name}' not found. Use fallback 'en_core_web_trf'.")
-            model_name = "en_core_web_trf"
-            loaded_models[model_name] = spacy.load(model_name)
+            print(f"⚠️ spaCy model '{model_name}' not found. Falling back to English.")
+            fallback_model = SPACY_MODELS["en"]
+            if fallback_model not in loaded_models:
+                loaded_models[fallback_model] = spacy.load(fallback_model)
+            return loaded_models[fallback_model]
+
     return loaded_models[model_name]
 
-def tokenize_text(text, lang="en"):
+
+def tokenize_text(text: str, lang: str = "en"):
     nlp = get_spacy_model(lang)
     doc = nlp(text)
     return doc, nlp
 
+
 def extract_geo_entity(doc, context=None):
+    geo_labels = {"LOC", "GPE", "FAC"}
     if context is None:
-        return [ent.text for ent in doc.ents if ent.label_ in ["LOC", "GPE", "NOUN", "PROPN"]]
-    else:
-        return [{"text": ent.text, "context": context} for ent in doc.ents if ent.label_ in ["LOC", "GPE", "NOUN", "PROPN"]]
+        return [ent.text for ent in doc.ents if ent.label_ in geo_labels]
 
-def disambiguation_with_wikifier(text, lang="en"):
-    url = "https://www.wikifier.org/annotate-article"
-    data = {
-        "text": text,
-        "lang": lang,
-        "userKey": WIKIFIER_API_KEY,
-        "support": "true",
-        "pageRankSqThreshold": "0.8",
-        "applyFilters": "true",
-        "filterCategories": "true",
-        "threshold": "0.8",
-    }
-    response = requests.post(url, data=data)
-    response.raise_for_status()
-    return response.json().get("annotations", [])
+    return [
+        {"text": ent.text, "context": context}
+        for ent in doc.ents
+        if ent.label_ in geo_labels
+    ]
 
-def call_wikifier(text: str, lang: str = "en", threshold: float = 0.8):
-    url = "https://www.wikifier.org/annotate-article"
-    data = {
-        'text': text,
-        'lang': lang,
-        'userKey': WIKIFIER_API_KEY,
-        'support': 1,
-        'pageRankSqThreshold': threshold,
-        'applyPageRankSqThreshold': True,
-        'nTopDfValuesToIgnore': 200,
-        'fastMode': False
-    }
-    response = requests.post(url, data=data)
-    response.raise_for_status()
-    return response.json().get("annotations", [])
 
-def is_geographic_entity(qid, attempt=1):
-    try:
-        query = f"""
-        ASK {{
-          wd:{qid} wdt:P31 ?type .
-          ?type wdt:P279* wd:Q618123 .
-        }}
-        """
-        url = "https://query.wikidata.org/sparql"
-        headers = {"Accept": "application/sparql-results+json"}
-        response = requests.get(url, params={"query": query}, headers=headers)
-        response.raise_for_status()
-        return response.json()['boolean']
-    except urllib.error.HTTPError as e:
-        if e.code == 504:
-            print(f"[WIKIDATA] Timeout for entity '{qid}'")
-        elif e.code == 429:
-            attempt += 1
-            wait = 2
-            if attempt == 2:
-                wait = 5
-            elif attempt == 3:
-                wait = 10
-            if attempt <= 3:
-                print(f"[WIKIDATA] Too many requests for entity '{qid}'. Retrying attempt {attempt}...")
-                time.sleep(wait)
-                is_geographic_entity(qid, attempt)
-            else:
-                print(f"[WIKIDATA] Too many requests for entity '{qid}'. Skipping...")
-        else:
-            print(f"[WIKIDATA] Error: {e} for entity '{qid}'")
-            return []
-
-def get_osm_relation_id(qid):
-    query = f"""
-    SELECT ?osmId WHERE {{
-      wd:{qid} wdt:P402 ?osmId .
-    }}
+def parse_wikidata_point(coord_value: str) -> Optional[Tuple[float, float]]:
     """
-    url = "https://query.wikidata.org/sparql"
-    headers = {"Accept": "application/sparql-results+json"}
-    response = requests.get(url, params={"query": query}, headers=headers)
-    response.raise_for_status()
-    bindings = response.json()["results"]["bindings"]
-    if bindings:
-        return bindings[0]["osmId"]["value"]
-    return None
-
-def get_geometry_from_osm(osm_id):
-    overpass_url = "https://overpass-api.de/api/interpreter"
-    query = f"""
-    [out:json];
-    relation({osm_id});
-    out geom;
+    Converte una stringa WKT tipo 'Point(12.5 41.9)' in (lat, lon).
     """
-    response = requests.get(overpass_url, params={"data": query})
-    response.raise_for_status()
-    data = response.json()
-    coordinates = []
-    for element in data["elements"]:
-        for el in element:
-            if el == "members":
-                for e in element[el]:
-                    for prop in e:
-                        if prop == "geometry":
-                            coords = [(pt["lon"], pt["lat"]) for pt in e[prop]]
-                            if coords:
-                                coordinates.append(coords)
-    return coordinates
-
-def convert_to_vkt(coordinates):
-    from shapely.geometry import Polygon, MultiPolygon
-    polygons = [Polygon(coords) for coords in coordinates if len(coords) >= 3]
-    if not polygons:
+    if not coord_value or not coord_value.startswith("Point("):
         return None
-    multi = MultiPolygon(polygons)
-    return multi.wkt
 
-#def save_geojson(file, filename="output.geojson"):
-#    features = []
-#
-#    for res in file:
-#        vkt_value = res.get("vkt")
-#        if not vkt_value:
-#            continue
-#        try:
-#            shape = wkt.loads(vkt_value)
-#            geojson_geom = geojson.Feature(
-#                geometry=geojson.loads(geojson.dumps(shape.__geo_interface__)),
-#                properties={
-#                    "label": res["label"],
-#                    "qid": res["qid"],
-#                    "description": res.get("description"),
-#                    "wikidata_url": res["wikidata_url"],
-#                    "osm_id": res.get("osm_id")
-#                }
-#            )
-#            features.append(geojson_geom)
-#        except Exception as e:
-#            print(f"❌ Error converting GeoJSON to {res['label']}: {e}")
-#
-#    feature_collection = geojson.FeatureCollection(features)
-#    with open(filename, "w", encoding="utf-8") as f:
-#        geojson.dump(feature_collection, f, ensure_ascii=False, indent=2)
-#    print(f"\n✅ GeoJSON saved in: {filename}")
-
-def find_similar_string(target, candidates, threshold=0.7):
-    result = process.extractOne(target, candidates, scorer=fuzz.token_sort_ratio)
-
-    if result and result[1] / 100 >= threshold:
-        return result[0]
-    return None
-
-def get_coordinates_from_wikidata(qid):
-    query = f"""
-    SELECT ?coord WHERE {{
-      wd:{qid} wdt:P625 ?coord .
-    }}
-    """
-    url = "https://query.wikidata.org/sparql"
-    headers = {"Accept": "application/sparql-results+json"}
-    response = requests.get(url, params={"query": query}, headers=headers)
-    response.raise_for_status()
-    coors_bindings = response.json()["results"]["bindings"]
-    if coors_bindings:
-        coord_str = coors_bindings[0]["coord"]["value"]
-        if coord_str.startswith("Point("):  # WKT
-            parts = coord_str[6:-1].split()
-            lon, lat = float(parts[0]), float(parts[1])
-            return lat, lon
-    return None
-
-def fallback_wikidata_search(entity_text, lang="en"):
-    """
-    Search for an entity on Wikidata using the search bar (wbsearchentities API),
-    similar to the website behavior.
-    Returns the first result if available.
-    """
-    url = "https://www.wikidata.org/w/api.php"
-    params = {
-        "action": "wbsearchentities",
-        "search": entity_text,
-        "language": lang,
-        "format": "json",
-        "limit": 1
-    }
-
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
-
-    if data.get("search"):
-        result = data["search"][0]
-        return {
-            "wikiDataItemId": result["id"],
-            "title": result.get("label", entity_text),
-            "description": result.get("description", "")
-        }
-
-    return None
-
-def segment_by_language(text, nlp):
-    segments = []
-    current_lang = None
-    current_block = []
-
-    if "sentencizer" not in nlp.pipe_names:
-        nlp.add_pipe("sentencizer")
-
-    doc = nlp(text)
-
-    for sent in doc.sents:
-        sent_text = sent.text.strip()
-        if not sent_text:
-            continue
-
-        try:
-            lang = detect(sent_text)
-        except:
-            lang = "en"  # fallback
-
-        if lang != current_lang:
-            if current_block:
-                segments.append({
-                    "lang": current_lang,
-                    "text": " ".join(current_block)
-                })
-            current_block = [sent_text]
-            current_lang = lang
-        else:
-            current_block.append(sent_text)
-
-    if current_block:
-        segments.append({
-            "lang": current_lang,
-            "text": " ".join(current_block)
-        })
-
-    return segments
-
-def retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry, allow_duplicates):
     try:
-        if not only_geometry:
-            if annotation.get("cosine", 1.0) < 0.5 or not is_geographic_entity(qid):
-                return
-        elif allow_duplicates:
-            if qid in processed_qids:
-                print(f"\n⚠️ Skipping {qid}, already processed.")
-                return
-        print(f"\n🔍 Entity check: {label} ({qid})...")
-        osm_id = get_osm_relation_id(qid)
-        print(f"✔️ It is geographic - OSM ID: {osm_id}")
-        vkt = None
-        if osm_id:
-            coords = get_geometry_from_osm(osm_id)
-            if coords:
-                vkt = convert_to_vkt(coords)
-            else:
-                print("⚠️ No OSM geometry found. Trying with coordinates...")
-        if not vkt:
-            coords_point = get_coordinates_from_wikidata(qid)
-            if coords_point:
-                lat, lon = coords_point
-                vkt = f"POINT ({lon} {lat})"
-                print(f"📍 Coordinates found: {lat}, {lon}")
-                print(f"📍 VKT: {vkt[:80]}..." if vkt else "⚠️ No valid geometry.")
-        else:
-            geom_type = vkt.split()[0]
-            print(f"📐 Geometry type: {geom_type}")
+        raw = coord_value.replace("Point(", "").replace(")", "").strip()
+        lon, lat = map(float, raw.split())
+        return lat, lon
+    except Exception:
+        return None
 
-        if not only_geometry:
-            description = annotation.get("description")
-        else:
-            description = ""
 
-        entities.append({
-            "label": label,
-            "qid": qid,
-            "description": description,
-            "wikidata_url": f"https://www.wikidata.org/wiki/{qid}",
-            "osm_id": osm_id,
-            "vkt": vkt,
-            "wkt": f"SRID=4326;{vkt}"  # compliant with geo:wktLiteral
-        })
+def escape_sparql_string(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
 
-        if not only_geometry and not allow_duplicates:
-            processed_qids.add(qid)
+QLEVER_OSM_URL = "https://qlever.dev/api/osm-planet"
 
-        time.sleep(4)  # Avoid rate limit
+def get_wkt_from_qlever(qid: str, attempt: int = 1) -> Optional[str]:
+    
+    start_query = time.perf_counter()
+    
+    query = f"""
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+    PREFIX osm: <https://www.openstreetmap.org/>
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX osm2rdfkey: <https://osm2rdf.cs.uni-freiburg.de/rdf/key#>
 
-        if only_geometry:
-            return entities
+    SELECT ?osm_id ?wkt WHERE {{
+      ?osm_id osm2rdfkey:wikidata wd:{qid} .
+      ?osm_id rdf:type osm:relation .
+      ?osm_id geo:hasGeometry/geo:asWKT ?wkt .
+      FILTER(
+        STRSTARTS(STR(?wkt), "POLYGON")
+        || STRSTARTS(STR(?wkt), "MULTIPOLYGON")
+      )
+    }}
+    LIMIT 1
+    """
+
+    try:
+        QUERY_COUNTER["qlever_osm"] += 1
+        print(f"[QLEVER OSM QUERY #{QUERY_COUNTER['qlever_osm']}] qid={qid}")
+
+        response = requests.post(
+            QLEVER_OSM_URL,
+            data={"query": query},
+            headers={
+                "Accept": "application/sparql-results+json",
+                "User-Agent": HTTP_HEADERS["User-Agent"]
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        
+        elapsed = time.perf_counter() - start_query
+        add_timing("qlever_osm", elapsed)
+        print(f"[QLEVER TIME] {qid} -> {elapsed:.3f}s")
+        
+        data = response.json()
+
+        bindings = data.get("results", {}).get("bindings", [])
+        if bindings:
+            return bindings[0]["wkt"]["value"]
+
+        return None
+
+    except requests.RequestException as e:
+        if attempt < 3:
+            wait = [2, 5, 10][attempt - 1]
+            print(f"[QLEVER OSM] Error for '{qid}': {e}. Retrying in {wait}s...")
+            time.sleep(wait)
+            return get_wkt_from_qlever(qid, attempt + 1)
+
+        print(f"[QLEVER OSM] Final error for '{qid}': {e}")
+        return None
+
+def query_candidates_full(
+    sparql: SPARQLWrapper,
+    label: str,
+    lang: str = "en",
+    attempt: int = 1
+) -> List[dict]:
+    """
+    Una sola query SPARQL per entità.
+    Mantiene la tua struttura con match sulla Wikipedia locale.
+    Ritorna già: qid, label, description, coord, osm_id
+    e filtra gli item geografici direttamente in SPARQL.
+    """
+    safe_label = escape_sparql_string(label)
+    
+    start_query = time.perf_counter()
+    
+    query = f"""
+    SELECT DISTINCT ?item ?itemLabel ?description ?coord ?osmId WHERE {{
+      ?article schema:about ?item ;
+               schema:isPartOf <https://{lang}.wikipedia.org/> ;
+               schema:name "{safe_label}"@{lang} .
+
+      ?item wdt:P31 ?type .
+      ?type wdt:P279* wd:Q618123 .
+
+      OPTIONAL {{
+        ?item schema:description ?description .
+        FILTER(LANG(?description) = "{lang}")
+      }}
+
+      OPTIONAL {{ ?item wdt:P625 ?coord }}
+      OPTIONAL {{ ?item wdt:P402 ?osmId }}
+
+      SERVICE wikibase:label {{
+        bd:serviceParam wikibase:language "{lang},en"
+      }}
+    }}
+    LIMIT 10
+    """
+
+    try:
+        sparql.setQuery(query)
+        
+        QUERY_COUNTER["wikidata_sparql"] += 1
+        print(f"[SPARQL QUERY #{QUERY_COUNTER['wikidata_sparql']}] label='{label}' lang='{lang}'")
+        
+        results = sparql.query().convert()["results"]["bindings"]
+        
+        elapsed = time.perf_counter() - start_query
+        add_timing("wikidata_sparql", elapsed)
+        print(f"[SPARQL TIME] '{label}' -> {elapsed:.3f}s")
+
+        out = []
+        for r in results:
+            qid = r["item"]["value"].split("/")[-1]
+            coord_raw = r.get("coord", {}).get("value", "")
+            latlon = parse_wikidata_point(coord_raw)
+
+            out.append({
+                "qid": qid,
+                "label": r.get("itemLabel", {}).get("value", label),
+                "description": r.get("description", {}).get("value", ""),
+                "coord": latlon,
+                "osm_id": r.get("osmId", {}).get("value")
+            })
+
+        print(f"\n[WIKIDATA] Candidates found for '{label}' ({lang}):")
+        print(out)
+        return out
 
     except Exception as e:
-        print(f"❌ Error with {label}: {e}")
-        print("Retrying...")
-        time.sleep(10)
-        retrieve_geometry(annotation, label, qid, entities, processed_qids, only_geometry, allow_duplicates)
+        if attempt < 3:
+            wait = [2, 5, 10][attempt - 1]
+            print(f"[WIKIDATA] Error for '{label}': {e}. Retrying in {wait}s...")
+            time.sleep(wait)
+            return query_candidates_full(sparql, label, lang, attempt + 1)
 
-def process_annotation(annotation, processed_qids, entities):
-    try:
-        qid = annotation["wikiDataItemId"]
-        label = annotation["title"]
-    except KeyError as e:
-        print(f"\n⚠️ Warning. The key {e} is missing from the annotation '{annotation['title']}'.")
-        return
-
-    if qid in processed_qids:
-        return
-
-    retrieve_geometry(annotation, label, qid, entities, processed_qids, False, False)
-
-def analyze(annotation_text, entities, processed_qids):
-    for ann in annotation_text:
-        process_annotation(ann, processed_qids, entities)
-
-def detect_spacy_and_fallback(entities_spacy, processed_qids, entities, lg, to_detect):
-    for ent_text in entities_spacy:
-
-        if to_detect:
-            try:
-                lg = detect(ent_text)
-            except:
-                lg = "en"  # fallback
-
-        ent_annotations = disambiguation_with_wikifier(ent_text, lg)
-        if not ent_annotations:
-            print(f"\n⚠️ No annotations from Wikifier for: '({lg}) {ent_text}', trying fallback...")
-            fallback_result = fallback_wikidata_search(ent_text, lg)
-            if fallback_result:
-                process_annotation(fallback_result, processed_qids, entities)
-
-        else:
-            for ann in ent_annotations:
-                process_annotation(ann, processed_qids, entities)
-
-def analyze_text(text, lang="en"):
-    doc, nlp = tokenize_text(text, lang=lang)
-    entities_spacy = extract_geo_entity(doc)
-    print(f"\nEntities found by spaCy: {', '.join(entities_spacy)}")
-
-    entities = []
-    processed_qids = set()
-
-    # workflow: Wikifier disambiguation of the entities found by spaCy and then repeat the disambiguation of all the text by Wikifier
-    # the difference between mixed language and a single one is that in the first case we need to detect the language of each phrase
-    if lang == "xx":
-
-        detect_spacy_and_fallback(entities_spacy, processed_qids, entities, lang, to_detect=True)
-
-        # then try again and leave to Wikifier all the tasks
-        multilingual_segments = segment_by_language(text, nlp)
-
-        for segment in multilingual_segments:
-            entities_temp = []
-            annotations = disambiguation_with_wikifier(segment['text'], lang=segment['lang'])
-            analyze(annotations, entities_temp, processed_qids)
-            entities.extend(entities_temp)
-
-    else:
-        detect_spacy_and_fallback(entities_spacy, processed_qids, entities, lang, to_detect=False)
-        annotations = disambiguation_with_wikifier(text, lang)
-        analyze(annotations, entities, processed_qids)
-
-    return entities
-
-def perform_sparql_query(query: str):
-    endpoint = "https://query.wikidata.org/sparql"
-    headers = {
-        "Accept": "application/sparql-results+json"
-    }
-    response = requests.get(endpoint, params={"query": query}, headers=headers)
-    if response.status_code == 200:
-        return response.json().get("results", {}).get("bindings", [])
-    else:
+        print(f"[WIKIDATA] Final error for '{label}': {e}")
         return []
 
 
-def get_wikipedia_article_from_geonames(geonames_iri):
-    rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
-    response = requests.get(rdf_url)
+def get_wikidata_coord(qid: str, attempt: int = 1) -> Optional[Tuple[float, float]]:
 
-    if response.status_code == 200:
-        root = ET.fromstring(response.content)
-        ns = {
-            'gn': 'https://www.geonames.org/ontology#',
-            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-        }
-
-        for wiki_elem in root.findall('.//gn:wikipediaArticle', ns):
-            url = wiki_elem.attrib.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-            if url and 'en.wikipedia.org' in url:
-                return url
-
-    return None
-
-
-def get_wikidata_entity_from_geonames(geonames_iri):
-    rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
-    response = requests.get(rdf_url)
-    wikipedia_url = ''
-
-    if response.status_code == 200:
-        root = ET.fromstring(response.content)
-        ns = {
-            'gn': 'https://www.geonames.org/ontology#',
-            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-        }
-
-        for wiki_elem in root.findall('.//gn:wikipediaArticle', ns):
-            url = wiki_elem.attrib.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-            if url and 'en.wikipedia.org' in url:
-                wikipedia_url = url
-                break
-
-    if wikipedia_url and 'en.wikipedia.org' in wikipedia_url:
-        parsed_url = urlparse(wikipedia_url)
-        title = unquote(parsed_url.path.split("/wiki/")[-1])
-
-        wiki_api_url = f"https://{parsed_url.hostname}/w/api.php"
-        params = {
-            "action": "query",
-            "titles": title,
-            "prop": "pageprops",
-            "format": "json"
-        }
-
-        headers = {
-            "User-Agent": "MyPythonScript/1.0 (claudio.demartino@isti.cnr.it)"
-        }
-
-        try:
-            response = requests.get(wiki_api_url, params=params, headers=headers)
-
-            if response.status_code == 429:
-                raise WikipediaRateLimitException("Rate limit exceeded (HTTP 429). Try again later.")
-
-            response.raise_for_status()
-            data = response.json()
-
-            if "error" in data:
-                if data["error"].get("code") == "ratelimited":
-                    raise WikipediaRateLimitException("Rate limit exceeded (API error 'ratelimited'). Try again later.")
-                else:
-                    raise Exception(f"API returned an error: {data['error']}")
-
-            pages = data.get("query", {}).get("pages", {})
-            for page in pages.values():
-                wikidata_id = page.get("pageprops", {}).get("wikibase_item")
-                if wikidata_id:
-                    wikidata_api_url = "https://www.wikidata.org/w/api.php"
-                    label_params = {
-                        "action": "wbgetentities",
-                        "ids": wikidata_id,
-                        "format": "json",
-                        "props": "labels",
-                        "languages": "en"
-                    }
-                    wd_response = requests.get(wikidata_api_url, params=label_params, headers=headers)
-                    wd_response.raise_for_status()
-                    wd_data = wd_response.json()
-
-                    label = wd_data.get("entities", {}).get(wikidata_id, {}).get("labels", {}).get("en", {}).get("value", "")
-                    return {"id": wikidata_id, "label": label}
-
-            return {}
-
-        except requests.RequestException as e:
-            raise Exception(f"HTTP request failed: {e}")
-
-
-def get_geonames_label(geonames_id):
-    #rdf_url = geonames_iri.rstrip('/') + '/about.rdf'
-    rdf_url = f"https://www.geonames.org/{geonames_id}/about.rdf"
-    response = requests.get(rdf_url)
-
-    if response.status_code == 200:
-        root = ET.fromstring(response.content)
-        ns = {
-            'gn': 'https://www.geonames.org/ontology#',
-            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'rdfs': 'http://www.w3.org/2000/01/rdf-schema#'
-        }
-
-        label_elem = root.find('.//gn:name', ns)
-        if label_elem is not None and label_elem.text:
-            return label_elem.text
-
-    return None
-
-
-def get_wikidata_entity_from_wikipedia_url(wikipedia_url: str, language: str = "en") -> dict:
-    parsed_url = urlparse(wikipedia_url)
-    title = unquote(parsed_url.path.split("/wiki/")[-1])
-
-    wiki_api_url = f"https://{parsed_url.hostname}/w/api.php"
+    url = "https://www.wikidata.org/w/api.php"
     params = {
-        "action": "query",
-        "titles": title,
-        "prop": "pageprops",
-        "format": "json"
-    }
-
-    headers = {
-        "User-Agent": "MyPythonScript/1.0 (claudio.demartino@isti.cnr.it)"
+        "action": "wbgetentities",
+        "format": "json",
+        "ids": qid,
+        "props": "claims"
     }
 
     try:
-        response = requests.get(wiki_api_url, params=params, headers=headers)
+        start_query = time.perf_counter()
 
-        if response.status_code == 429:
-            raise WikipediaRateLimitException("Rate limit exceeded (HTTP 429). Try again later.")
+        QUERY_COUNTER["wikidata_api"] += 1
+        print(f"[WIKIDATA API #{QUERY_COUNTER['wikidata_api']}] get coord for '{qid}'")
 
+        response = requests.get(url, params=params, headers=HTTP_HEADERS, timeout=20)
         response.raise_for_status()
+
+        elapsed = time.perf_counter() - start_query
+        add_timing("wikidata_api", elapsed)
+        print(f"[WIKIDATA API TIME] coord '{qid}' -> {elapsed:.3f}s")
+
         data = response.json()
+        entity = data.get("entities", {}).get(qid, {})
+        claims = entity.get("claims", {})
+        p625 = claims.get("P625", [])
 
-        if "error" in data:
-            if data["error"].get("code") == "ratelimited":
-                raise WikipediaRateLimitException("Rate limit exceeded (API error 'ratelimited'). Try again later.")
-            else:
-                raise Exception(f"API returned an error: {data['error']}")
+        if not p625:
+            return None
 
-        pages = data.get("query", {}).get("pages", {})
-        for page in pages.values():
-            wikidata_id = page.get("pageprops", {}).get("wikibase_item")
-            if wikidata_id:
-                wikidata_api_url = "https://www.wikidata.org/w/api.php"
-                label_params = {
-                    "action": "wbgetentities",
-                    "ids": wikidata_id,
-                    "format": "json",
-                    "props": "labels",
-                    "languages": language
-                }
-                wd_response = requests.get(wikidata_api_url, params=label_params, headers=headers)
-                wd_response.raise_for_status()
-                wd_data = wd_response.json()
+        mainsnak = p625[0].get("mainsnak", {})
+        datavalue = mainsnak.get("datavalue", {})
+        value = datavalue.get("value", {})
 
-                label = wd_data.get("entities", {}).get(wikidata_id, {}).get("labels", {}).get(language, {}).get("value", "")
-                return {"id": wikidata_id, "label": label}
+        lat = value.get("latitude")
+        lon = value.get("longitude")
 
-        return {}
+        if lat is None or lon is None:
+            return None
+
+        return (lat, lon)
 
     except requests.RequestException as e:
-        raise Exception(f"HTTP request failed: {e}")
+        if attempt < 3:
+            wait = [2, 5, 10][attempt - 1]
+            print(f"[WIKIDATA API] Error getting coord for '{qid}': {e}. Retrying in {wait}s...")
+            time.sleep(wait)
+            return get_wikidata_coord(qid, attempt + 1)
 
-
-def search_wikidata_entity(query, language='en', attempt=1):
+        print(f"[WIKIDATA API] Final error getting coord for '{qid}': {e}")
+        return None
+        
+def search_wikidata_entity(query: str, language: str = "en", attempt: int = 1) -> Optional[dict]:
+    """
+    Fallback solo se la query SPARQL con match Wikipedia non trova nulla.
+    """
     url = "https://www.wikidata.org/w/api.php"
-    headers = {
-        "User-Agent": "GeoEntityLinker/1.0 (aimhdhgroup@gmail.com)"
-    }
     params = {
         "action": "wbsearchentities",
         "format": "json",
@@ -725,2469 +601,538 @@ def search_wikidata_entity(query, language='en', attempt=1):
     }
 
     try:
-        response = requests.get(url, params=params, headers=headers)
+        start_query = time.perf_counter()
+        
+        QUERY_COUNTER["wikidata_api"] += 1
+        print(f"[WIKIDATA API #{QUERY_COUNTER['wikidata_api']}] search='{query}'")
+        response = requests.get(url, params=params, headers=HTTP_HEADERS, timeout=20)
         response.raise_for_status()
+        
+        elapsed = time.perf_counter() - start_query
+        add_timing("wikidata_api", elapsed)
+        print(f"[WIKIDATA API TIME] '{query}' -> {elapsed:.3f}s")
+        
         results = response.json().get("search", [])
 
-        for result in results:
-            entity_id = result["id"]
-            if is_geographic_entity(entity_id):
-                return {
-                    "id": result["id"],
-                    "label": result.get("label"),
-                    "description": result.get("description")
-                }
+        print(f"\n[WIKIDATA API] Search fallback for '{query}':")
+        print(results)
+
+        if not results:
+            return None
+
+        # qui prendiamo il primo risultato come fallback debole.
+        result = results[0]
+        return {
+            "id": result["id"],
+            "label": result.get("label", query),
+            "description": result.get("description", ""),
+            "coord": None,
+            "osm_id": None
+        }
 
     except requests.RequestException as e:
-        attempt += 1
-        wait = 2
-        if attempt == 2:
-            wait = 5
-        elif attempt == 3:
-            wait = 10
-        if attempt <= 3:
-            print(f"\n⚠️ Wikidata query error : {e}. Retrying attempt {attempt}...")
+        if attempt < 3:
+            wait = [2, 5, 10][attempt - 1]
+            print(f"[WIKIDATA API] Error for '{query}': {e}. Retrying in {wait}s...")
             time.sleep(wait)
-            search_wikidata_entity(query, language, attempt)
-        else:
-            print(f"\n⚠️ Wikidata query error : {e}. Skipping...")
+            return search_wikidata_entity(query, language, attempt + 1)
 
-    return None
+        print(f"[WIKIDATA API] Final error for '{query}': {e}")
+        return None
 
 
-async def parse_excel_xml(file):
-    content = await file.read()
-    tree = ET.ElementTree(ET.fromstring(content))
-    root = tree.getroot()
-
-    ns = {
-        'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
-        'html': 'http://www.w3.org/TR/REC-html40'
-    }
-
-    data_elements = root.findall(".//ss:Data[@ss:Type='String']", namespaces=ns)
-
-    extracted_texts = []
-    for elem in data_elements:
-        full_text = ''.join(elem.itertext()).strip()
-        extracted_texts.append(full_text)
-
-    return extracted_texts
-
-def query_wikidata(entity_label, lang="en"):
-    query = f"""
-    SELECT ?item ?itemLabel WHERE {{
-      ?item rdfs:label "{entity_label}"@{lang} .
-      ?item wdt:P31/wdt:P279* wd:Q618123 .  # instance of (or subclass of) geographical entity
-      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{lang}" }}
-    }}
-    LIMIT 3
-    """
-    url = "https://query.wikidata.org/sparql"
-    headers = {"Accept": "application/sparql-results+json"}
-    response = requests.get(url, params={'query': query}, headers=headers)
-    results = response.json().get("results", {}).get("bindings", [])
-    return [{"label": r["itemLabel"]["value"], "id": r["item"]["value"].split("/")[-1]} for r in results]
-
-def filter_by_mentions(wikifier_result, mentions):
-    entities = []
-    for ann in wikifier_result.get("annotations", []):
-        if ann["title"] in mentions:
-            entities.append({
-                "title": ann["title"],
-                "wikiDataId": ann.get("wikiDataId")
-            })
-    return entities
-
-def choose_best(model, candidates, context):    #, other_coords=[]
+def choose_best(model, candidates: List[dict], context: str) -> Optional[dict]:
     if not candidates:
         return None
 
     context_embedding = model.encode(context, convert_to_tensor=True)
     scored = []
+
     for c in candidates:
-        desc_embedding = model.encode(c['description'], convert_to_tensor=True)
+        description = c.get("description") or c.get("label") or ""
+        desc_embedding = model.encode(description, convert_to_tensor=True)
         sim = util.cos_sim(context_embedding, desc_embedding).item()
+        scored.append((sim, c))
 
-        #dist_penalty = 0
-        #if c['coord'] and other_coords:
-        #    distances = [geodesic(c['coord'], other).km for other in other_coords if other]
-        #    dist_penalty = sum(distances) / len(distances)
+    best_score, best_candidate = max(scored, key=lambda x: x[0])
+    best_candidate["cosine"] = best_score
+    return best_candidate
 
-        score = sim # sim - (dist_penalty / 10000)
-        scored.append((score, c))
 
-    best = max(scored, key=lambda x: x[0])[1]
-    return best
-
-def query_candidates(sparql, label, lang="en", attempt=1):
+def get_geometry_from_osm(osm_id: str, attempt: int = 1) -> List[List[Tuple[float, float]]]:
+    """
+    Recupera la geometria della relation OSM da Overpass.
+    Ritorna una lista di linee/poligoni, ciascuno come lista di tuple (lon, lat).
+    """
+    query = f"""
+    [out:json][timeout:60];
+    relation({osm_id});
+    out geom;
+    """
 
     try:
-        sparql.setQuery(f"""
-            SELECT ?item ?itemLabel ?description ?coord WHERE {{
-              ?article schema:about ?item ;
-                       schema:isPartOf <https://{lang}.wikipedia.org/> ;
-                       schema:name "{label}"@{lang} .
-              OPTIONAL {{ ?item schema:description ?description FILTER (lang(?description) = "{lang}") }}
-              OPTIONAL {{ ?item wdt:P625 ?coord }}
-              SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{lang}" }}
-            }}
-            LIMIT 3
-            """)
-        results = sparql.query().convert()['results']['bindings']
-        out = []
-        for r in results:
-            qid = r["item"]["value"].split("/")[-1]
-            desc = r.get("description", {}).get("value", "")
-            coord = r.get("coord", {}).get("value", "")
-            latlon = None
-            if coord:
-                raw = coord.replace("Point(", "").replace(")", "")
-                lon, lat = map(float, raw.split())
-                latlon = (lat, lon)
-            if is_geographic_entity(qid):
-                out.append({
-                    "qid": qid,
-                    "label": r["itemLabel"]["value"],
-                    "description": desc,
-                    "coord": latlon
-                })
-        return out
-    except urllib.error.HTTPError as e:
-        if e.code == 504:
-            print(f"[WIKIDATA] Timeout for '{label}'")
-        elif e.code == 429:
-            attempt += 1
-            wait = 2
-            if attempt == 2:
-                wait = 5
-            elif attempt == 3:
-                wait = 10
-            if attempt <= 3:
-                print(f"[WIKIDATA] Too many requests for '{label}'. Retrying attempt {attempt}...")
-                time.sleep(wait)
-                query_candidates(sparql, label, lang, attempt)
-            else:
-                print(f"[WIKIDATA] Too many requests for '{label}'. Skipping...")
-        else:
-            print(f"[WIKIDATA] Error: {e} for '{label}'")
-            return []
-    except Exception as e:
-        print(f"[WIKIDATA] Error: '{label}': {e}")
+        QUERY_COUNTER["osm_overpass"] += 1
+        print(f"[OSM QUERY #{QUERY_COUNTER['osm_overpass']}] relation={osm_id}")
+        response = requests.get(
+            OVERPASS_URL,
+            params={"data": query},
+            headers={"User-Agent": HTTP_HEADERS["User-Agent"]},
+            timeout=90
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        coordinates = []
+
+        for element in data.get("elements", []):
+            for member in element.get("members", []):
+                geom = member.get("geometry")
+                if geom:
+                    coords = [(pt["lon"], pt["lat"]) for pt in geom]
+                    if coords:
+                        coordinates.append(coords)
+
+        return coordinates
+
+    except requests.RequestException as e:
+        if attempt < 3:
+            wait = [2, 5, 10][attempt - 1]
+            print(f"[OSM] Error for relation '{osm_id}': {e}. Retrying in {wait}s...")
+            time.sleep(wait)
+            return get_geometry_from_osm(osm_id, attempt + 1)
+
+        print(f"[OSM] Final error for relation '{osm_id}': {e}")
         return []
 
 
-def do_geosparql(label, qid, entities, fts):
-    geometry = retrieve_geometry(None, label, qid,
-                                 entities, set(), True,
-                                 True)
-
-    if geometry:
-        for g in geometry:
-            if g["vkt"]:
-                feature_id = f"wd:{g['qid']}"
-                geometry_obj = {
-                    "@id": f"{feature_id}-geom",
-                    "@type": "Geometry",
-                    "asWKT": f"SRID=4326;{g['vkt']}"
-                }
-                feature_geo = {
-                    "@id": feature_id,
-                    "@type": "Feature",
-                    "label": g["label"],
-                    "description": g["description"],
-                    "qid": g["qid"],
-                    "wikidata": g["wikidata_url"],
-                    "osm_id": g["osm_id"],
-                    "hasGeometry": geometry_obj
-                }
-
-                fts.append(feature_geo)
+def ring_is_closed(coords: List[Tuple[float, float]]) -> bool:
+    return len(coords) >= 4 and coords[0] == coords[-1]
 
 
-def download_zip(fts, geo_doc):
-    filename = f"entities{uuid4().hex}.json"  # path = f"/tmp/{filename}"
-    filename2 = f"geosparql{uuid4().hex}.json"
-    tmpdir = tempfile.gettempdir()
-    path = os.path.join(tmpdir, filename)
-    path2 = os.path.join(tmpdir, filename2)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(fts, f, ensure_ascii=False, indent=2)
+def convert_to_wkt(geometries: List[List[Tuple[float, float]]]) -> Optional[str]:
+    """
+    Converte l'output di Overpass in WKT.
+    Heuristica semplice:
+    - 1 geometria chiusa -> POLYGON
+    - più geometrie chiuse -> MULTIPOLYGON
+    - altrimenti MULTILINESTRING
+    """
+    if not geometries:
+        return None
 
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(geo_doc, f, ensure_ascii=False, indent=2)
+    closed_geometries = [g for g in geometries if ring_is_closed(g)]
+    open_geometries = [g for g in geometries if not ring_is_closed(g)]
 
-    zip_filename = f"export_{uuid4().hex}.zip"
-    zip_path = os.path.join(tmpdir, zip_filename)
+    def format_coords(coords: List[Tuple[float, float]]) -> str:
+        return ", ".join(f"{lon} {lat}" for lon, lat in coords)
 
-    with zipfile.ZipFile(zip_path, "w") as zipf:
-        zipf.write(path, arcname="entities.json")
-        zipf.write(path2, arcname="geosparql.json")
+    if closed_geometries and not open_geometries:
+        if len(closed_geometries) == 1:
+            return f"POLYGON (({format_coords(closed_geometries[0])}))"
 
-    return FileResponse(zip_path, media_type="application/zip", filename="files.zip")
+        parts = []
+        for poly in closed_geometries:
+            parts.append(f"(({format_coords(poly)}))")
+        return f"MULTIPOLYGON ({', '.join(parts)})"
+
+    multiline_parts = [f"({format_coords(line)})" for line in geometries if len(line) >= 2]
+    if multiline_parts:
+        if len(multiline_parts) == 1:
+            return f"LINESTRING {multiline_parts[0]}"
+        return f"MULTILINESTRING ({', '.join(multiline_parts)})"
+
+    return None
 
 
-def download_features(fts):
-    filename = f"entities{uuid4().hex}.json"  # path = f"/tmp/{filename}"
-    tmpdir = tempfile.gettempdir()
-    path = os.path.join(tmpdir, filename)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(fts, f, ensure_ascii=False, indent=2)
-
-    return FileResponse(path, media_type="application/json", filename=filename)
-
-
-def append_feature(row, label, qid):
-    feature = {
+def append_feature(row: dict, label: str, qid: str):
+    row["entities"].append({
         "text_label": label,
         "Wikidata_ID": qid
+    })
+
+
+def do_geosparql_from_candidate(candidate: dict, fts: List[dict]):
+    qid = candidate["qid"]
+    label = candidate["label"]
+    coord = candidate.get("coord")
+
+    wkt_geom = get_wkt_from_qlever(qid)
+
+    # fallback ulteriore: se non ho poligono e non ho punto, provo a prendere P625 da Wikidata API
+    if not wkt_geom and not coord:
+        coord = get_wikidata_coord(qid)
+
+    wkt_point = None
+
+    if coord:
+        lat, lon = coord
+        wkt_point = f"POINT ({lon} {lat})"
+
+    geometries = []
+
+    if wkt_point:
+        geometries.append({
+            "@id": f"wd:{qid}-geom-point",
+            "@type": "geo:Geometry",
+            "geo:asWKT": f"SRID=4326;{wkt_point}"
+        })
+
+    if wkt_geom:
+        geometries.append({
+            "@id": f"wd:{qid}-geom-main",
+            "@type": "geo:Geometry",
+            "geo:asWKT": wkt_geom if wkt_geom.startswith("SRID=") else f"SRID=4326;{wkt_geom}"
+        })
+
+    if geometries:
+        feature_geo = {
+            "@id": f"https://wikidata.org/entity/{qid}",
+            "@type": "geo:Feature",
+            "schema:name": label,
+            "geo:hasGeometry": geometries if len(geometries) > 1 else geometries[0]
+        }
+        fts.append(feature_geo)
+
+
+def download_features(geosparql_doc: dict):
+    """
+    Placeholder semplice.
+    Se hai già una tua funzione custom, puoi rimettere la tua.
+    """
+    return {
+        "filename": "features.json",
+        "content": geosparql_doc
     }
-    row["entities"].append(feature)
 
 
-# ======= FastAPI endpoints =======
 
-# redirect from root to /docs
-@app.get("/", include_in_schema=False)
-async def root():
-    return RedirectResponse(url="/docs")
 
-@app.post("/text", tags=["Old GeoLinks"])
-def read_text(data: TextInput, download: bool = True):
-    """
-        Input: a JSON containing the text and the language as input, for example {"text": "your_text", "lang": "en"}.
 
-        Output: a JSON+LD file containing information about the entities found.
 
-        If "download" is True, a link is provided to download the response.
 
-        This endpoint parses the text using an older version of spaCy to identify and memorize geographic entities. Then, it searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
+
+
+
+
+
+
+
+
+
+
+###ENDPOINT
+
+
+class SpacyInput(BaseModel):
+    text: str
+    lang: str = "en"
+    download: bool = False
+    
+@app.post("/spacy", tags=["GeoLinks API Functionality"], summary=" ", operation_id="")
+async def spacy_ner(payload: SpacyInput):
     try:
-        lang = data.lang.lower()
-        if lang not in SUPPORTED_LANGUAGES:
-            return {not_supported_message}
-        results = analyze_text(data.text, lang=lang)
+        start_time = time.time()
+        text = payload.text
+        lang = payload.lang
+        download = payload.download
 
         features = []
-        for res in results:
-            if res["vkt"]:
-                feature_id = f"wd:{res['qid']}"
-                geometry_obj = {
-                    "@id": f"{feature_id}-geom",
-                    "@type": "Geometry",
-                    "asWKT": f"SRID=4326;{res['vkt']}"
-                }
-                feature = {
-                    "@id": feature_id,
-                    "@type": "Feature",
-                    "label": res["label"],
-                    "description": res["description"],
-                    "qid": res["qid"],
-                    "wikidata": res["wikidata_url"],
-                    "osm_id": res["osm_id"],
-                    "hasGeometry": geometry_obj
-                }
-                features.append(feature)
+        features_geosparql = []
+        
+        start_total = time.perf_counter()
+        t0 = time.perf_counter()
+        
+        doc, _ = tokenize_text(text, lang=lang)
+        
+        add_timing("tokenize_text", time.perf_counter() - t0)
+        print("All entities found:")
+        print(doc.ents)
+        
+        
+        t0 = time.perf_counter()
+        entities_spacy = extract_geo_entity(doc, text)
+        add_timing("extract_geo_entity", time.perf_counter() - t0)
+        print("Geo entities with context:")
+        print(entities_spacy)
 
-        geosparql_doc = {
-            **GEOSPARQL_CONTEXT,
-            "@graph": features
-        }
+        row = {"row": 1, "entities": []}
 
-        if not download:
-            return JSONResponse(content=geosparql_doc,
-                                media_type="application/ld+json")
+        sparql = SPARQLWrapper(WIKIDATA_SPARQL_URL)
+        sparql.setReturnFormat(JSON)
 
-        filename = f"geosparql_{uuid4().hex}.jsonld"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
-
-        return FileResponse(path, media_type="application/ld+json", filename=filename)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/old-xml", tags=["Old GeoLinks"])
-async def read_xml(file: UploadFile = File(...), lang: Optional[str] = "en", download: bool = True):
-    """
-        Input: an XML file.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        "Lang" is set to "en" by default.
-
-        If "download" is True, a link is provided to download the response.
-
-        After successfully reading the XML file, it parses the text using an older version of spaCy to identify and store geographic entities. Then, it searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-        lang = lang.lower()
-        if lang not in SUPPORTED_LANGUAGES:
-            return JSONResponse(status_code=400, content={"error": not_supported_message})
-
-        content = await file.read()
-        tree = ET.ElementTree(ET.fromstring(content))
-        root = tree.getroot()
-
-        ns = {'ns': 'http://www.w3.org/2005/sparql-results#'}
-
-        literals = root.findall(".//ns:binding[@name='o']/ns:literal", namespaces=ns)
-
-        if not literals:
-            return JSONResponse(status_code=400, content={"error": "No <text> nodes found in the XML file."})
-
-        #full_text = " ".join([literal.text.strip() for literal in literals if literal.text])
-        #if not full_text:
-        #    return JSONResponse(status_code=400, content={"error": "Empty text in the XML file."})
-
-        #results = analyze_text(full_text, lang=lang)
-        #return {"results": results}
-
-        features = []
-        for literal in literals:
-            text = literal.text.strip() if literal.text else ""
-            if text:
-                results = analyze_text(text, lang=lang)
-                for res in results:
-                    if res["vkt"]:
-                        feature_id = f"wd:{res['qid']}"
-                        geometry_obj = {
-                            "@id": f"{feature_id}-geom",
-                            "@type": "Geometry",
-                            "asWKT": f"SRID=4326;{res['vkt']}"
-                        }
-                        feature = {
-                            "@id": feature_id,
-                            "@type": "Feature",
-                            "label": res["label"],
-                            "description": res["description"],
-                            "qid": res["qid"],
-                            "wikidata": res["wikidata_url"],
-                            "osm_id": res["osm_id"],
-                            "hasGeometry": geometry_obj,
-                            "source_text": text
-                        }
-                        features.append(feature)
-            else:
-                print("Missing text for literal", literal)
-
-        geosparql_doc = {
-            **GEOSPARQL_CONTEXT,
-            "@graph": features
-        }
-
-        if not download:
-            return JSONResponse(content=geosparql_doc,
-                                media_type="application/ld+json")
-
-        filename = f"geosparql_{uuid4().hex}.jsonld"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
-
-        return FileResponse(path, media_type="application/ld+json", filename=filename)
-
-    except ET.ParseError:
-        raise HTTPException(status_code=400, detail="XML file not valid.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/iri", tags=["Old GeoLinks"])
-async def read_iri_geonames(iri: str = Query(..., description="Geonames IRI (e.g. https://www.geonames.org/2618425/denmark.html)"), lang: str = Query("en", description="Text language"), download: bool = Query(False, description="If True, return a downloadable .jsonld")):
-    """
-        Input: a Geonames IRI.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        "Lang" is set to "en" by default.
-
-        If "download" is True, a link is provided to download the response.
-
-        This endpoint extract the entity name from the IRI. Then, it searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-        lang = lang.lower()
-        if lang not in SUPPORTED_LANGUAGES:
-            return JSONResponse(status_code=400, content={"error": not_supported_message})
-
-        match = re.search(r'/(\d+)/', iri)
-        if not match:
-            return JSONResponse(status_code=400, content={"error": "Invalid GeoNames IRI format."})
-
-        geonames_id = match.group(1)
-
-        sparql_query = f"""
-                SELECT ?item ?itemLabel WHERE {{
-                  ?item wdt:P1566 "{geonames_id}".
-                  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{lang}" }}
-                }}
-                """
-
-        results = perform_sparql_query(sparql_query)
-        if not results:
-            return JSONResponse(status_code=404,
-                                content={"error": f"No Wikidata entity found for GeoNames ID {geonames_id}."})
-
-        binding = results[0]
-        label = binding.get("itemLabel", {}).get("value")
-
-        if not label:
-            return JSONResponse(status_code=404, content={"error": "No label found for matching Wikidata entity."})
-
-        results = analyze_text(label, lang=lang)
-
-        features = []
-        for res in results:
-            if res["vkt"]:
-                feature_id = f"wd:{res['qid']}"
-                geometry_obj = {
-                    "@id": f"{feature_id}-geom",
-                    "@type": "Geometry",
-                    "asWKT": f"SRID=4326;{res['vkt']}"
-                }
-                feature = {
-                    "@id": feature_id,
-                    "@type": "Feature",
-                    "label": res["label"],
-                    "description": res["description"],
-                    "qid": res["qid"],
-                    "wikidata": res["wikidata_url"],
-                    "osm_id": res["osm_id"],
-                    "hasGeometry": geometry_obj
-                }
-                features.append(feature)
-            else:
-                print("Missing text for ", res)
-
-        geosparql_doc = {
-            **GEOSPARQL_CONTEXT,
-            "@graph": features
-        }
-
-        if not download:
-            return JSONResponse(content=geosparql_doc,
-                                media_type="application/ld+json")
-
-        filename = f"geosparql_{uuid4().hex}.jsonld"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
-
-        return FileResponse(path, media_type="application/ld+json", filename=filename)
-
-    except Exception as e:
-        full_trace = traceback.format_exc()
-        raise HTTPException(status_code=500, detail=f"{str(e)}\nTraceback:\n{full_trace}")
-
-@app.post("/csv", tags=["Old GeoLinks"])
-async def read_csv_geonames(
-    file: UploadFile = File(..., description="CSV file with a 'geonames' column containing GeoNames IRIs"),
-    #lang: str = Query("en", description="Analysis language"),
-    download: bool = Query(False, description="If True, return a downloadable .jsonld")
-):
-    """
-        Input: a CSV file.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response.
-
-        This endpoint analyzes all the IRIs contained in the CSV file and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-        #lang = lang.lower()
-        #if lang not in SUPPORTED_LANGUAGES:
-        #    return JSONResponse(status_code=400, content={"error": not_supported_message})
-
-        content = await file.read()
-        df = pd.read_csv(pd.io.common.BytesIO(content))
-
-        if "geonames" not in df.columns:
-            return JSONResponse(status_code=400, content={"error": "Missing 'geonames' column in CSV."})
-
-        features = []
-
-        processed_geonames_id = set()
         processed_qids = set()
 
-        for iri in df["geonames"].dropna().unique():
-            entities = []
+        for ent in entities_spacy:
+            entity_start = time.perf_counter()
 
-            match = re.search(r'/(\d+)', iri)
-            if not match:
-                logger.warning(f"\n⚠️ Skipping {iri}, it is not a valid GeoNames IRI format.")
-                continue  # skip invalid IRI
+            label = ent["text"]
+            context = ent["context"]
 
-            geonames_id = match.group(1)
+            candidates = query_candidates_full(sparql, label, lang)
 
-            if geonames_id in processed_geonames_id:
-                logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
-                continue    # skip IRI already processed
+            if candidates:
+                t0 = time.perf_counter()
+                best = choose_best(sentence_model, candidates, context)
+                elapsed_best = time.perf_counter() - t0
+                add_timing("choose_best", elapsed_best)
+                print(f"[RANKING TIME] '{label}' -> {elapsed_best:.3f}s")
 
-            sparql_query = f"""
-                        SELECT ?item ?itemLabel WHERE {{
-                          ?item wdt:P1566 "{geonames_id}".
-                          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-                        }}
-                    """ # {lang}
-            results = perform_sparql_query(sparql_query)
+                if best:
+                    print("\nBest candidate selected:")
+                    print(best)
 
-            if not results:
-
-                # try retrieving the Wikipedia URL and linking it to a Wikidata entity
-                try:
-
-                    wikipedia_url = get_wikipedia_article_from_geonames(iri)
-
-                    if wikipedia_url:
-                        wikidata_entity = get_wikidata_entity_from_wikipedia_url(wikipedia_url)
-                    else:
-                        wikidata_entity = None
-
-                    if wikidata_entity:
-
-                        label = wikidata_entity["label"]
-                        qid = wikidata_entity["id"]
-
-                        if qid in processed_qids:
-                            logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
-                            continue
-
-                        geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True, False)
-
-                        if geometry:
-                            for g in geometry:
-                                if g["vkt"]:
-                                    feature_id = f"wd:{g['qid']}"
-                                    geometry_obj = {
-                                        "@id": f"{feature_id}-geom",
-                                        "@type": "Geometry",
-                                        "asWKT": f"SRID=4326;{g['vkt']}"
-                                    }
-                                    feature = {
-                                        "@id": feature_id,
-                                        "@type": "Feature",
-                                        "label": g["label"],
-                                        "description": g["description"],
-                                        "qid": g["qid"],
-                                        "wikidata": g["wikidata_url"],
-                                        "osm_id": g["osm_id"],
-                                        "hasGeometry": geometry_obj
-                                    }
-
-                                    features.append(feature)
-                                    processed_geonames_id.add(geonames_id)
-
-                                else:
-                                    logger.warning(f"\n⚠️ Missing geometry for '{g['label']}', Wikidata URL: {g['wikidata_url']}. Skipping '{iri}'.")
-                                    continue
-                        else:
-                            logger.warning(f"\n⚠️ Missing geometry for '{iri}'. Skipping...")
-                            continue
-
-                    else:
-
-                        if wikipedia_url:
-                            parsed_url = urlparse(wikipedia_url)
-                            title = unquote(parsed_url.path.split("/wiki/")[-1])
-
-                            if not title:
-                                title = get_geonames_label(geonames_id)
-
-                        else:
-                            title = get_geonames_label(geonames_id)
-
-                        if title:
-                            if "_" in title:
-                                title = title.replace("_", " ")
-
-                            annotations = disambiguation_with_wikifier(title)
-                            analyze(annotations, entities, processed_qids)
-
-                            if not entities:
-
-                                entity = search_wikidata_entity(title)
-
-                                if not entity:
-                                    logger.warning(f"\n⚠️ Skipping '{iri}', no results found.")
-                                    continue
-
-                                label = entity["label"]
-                                qid = entity["id"]
-
-                                if qid in processed_qids:
-                                    logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
-                                    continue
-
-                                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True, False)
-
-                                if geometry:
-                                    for g in geometry:
-                                        if g["vkt"]:
-                                            feature_id = f"wd:{g['qid']}"
-                                            geometry_obj = {
-                                                "@id": f"{feature_id}-geom",
-                                                "@type": "Geometry",
-                                                "asWKT": f"SRID=4326;{g['vkt']}"
-                                            }
-                                            feature = {
-                                                "@id": feature_id,
-                                                "@type": "Feature",
-                                                "label": g["label"],
-                                                "description": g["description"],
-                                                "qid": g["qid"],
-                                                "wikidata": g["wikidata_url"],
-                                                "osm_id": g["osm_id"],
-                                                "hasGeometry": geometry_obj
-                                            }
-
-                                            features.append(feature)
-                                            processed_geonames_id.add(geonames_id)
-
-                                        else:
-                                            logger.warning(
-                                                f"\n⚠️ Missing geometry for '{g['label']}', Wikidata URL: {g['wikidata_url']}. Skipping '{iri}'.")
-                                            continue
-                                else:
-                                    logger.warning(f"\n⚠️ Missing geometry for '{iri}'. Skipping...")
-                                    continue
-
-                                continue
-
-                            for e in entities:
-                                if e["vkt"]:
-                                    feature_id = f"wd:{e['qid']}"
-                                    geometry_obj = {
-                                        "@id": f"{feature_id}-geom",
-                                        "@type": "Geometry",
-                                        "asWKT": f"SRID=4326;{e['vkt']}"
-                                    }
-                                    feature = {
-                                        "@id": feature_id,
-                                        "@type": "Feature",
-                                        "label": e["label"],
-                                        "description": e["description"],
-                                        "qid": e["qid"],
-                                        "wikidata": e["wikidata_url"],
-                                        "osm_id": e["osm_id"],
-                                        "hasGeometry": geometry_obj
-                                    }
-                                    features.append(feature)
-                                    processed_geonames_id.add(geonames_id)
-
-                                else:
-                                    logger.warning(f"\n⚠️ Missing geometry for '{e['label']}, Wikidata URL: {e['wikidata_url']}'. Skipping '{iri}'.")
-                                    continue
-
-                            continue
-
-                        else:
-                            logger.warning(f"\n⚠️ Title is '{title}'. Skipping '{iri}'. Info: {wikipedia_url, wikidata_entity}.")
-                            continue
-
-
-                except WikipediaRateLimitException as e:
-                    logger.warning(f"\n⚠️ Wikipedia rate limit exceeded: {e}. Skipping '{iri}'.")
-                    continue
+                    if best["qid"] not in processed_qids:
+                        append_feature(row, label, best["qid"])
+                        do_geosparql_from_candidate(best, features_geosparql)
+                        processed_qids.add(best["qid"])
 
             else:
+                fallback_entity = search_wikidata_entity(label, lang)
+                if fallback_entity and fallback_entity["id"] not in processed_qids:
+                    append_feature(row, label, fallback_entity["id"])
 
-                binding = results[0]
-                label = binding.get("itemLabel", {}).get("value")
-                url = binding.get("item", {}).get("value")
-                match_id = re.search(r"wikidata\.org/entity/(Q\d+)", url)
-                qid = match_id.group(1)
-                if not qid:
-                    logger.warning(f"\n⚠️ Skipping '{iri}', qid not found.")
-                    continue
-                if not label:
-                    logger.warning(f"\n⚠️ Skipping '{iri}', label not found.")
-                    continue
+                    do_geosparql_from_candidate(
+                        {
+                            "qid": fallback_entity["id"],
+                            "label": fallback_entity.get("label", label),
+                            "description": fallback_entity.get("description", ""),
+                            "coord": fallback_entity.get("coord"),
+                            "osm_id": fallback_entity.get("osm_id")
+                        },
+                        features_geosparql
+                    )
 
-                if qid in processed_qids:
-                    logger.warning(f"\n⚠️ Skipping '{iri}', already processed.")
-                    continue
+                    processed_qids.add(fallback_entity["id"])
 
-                geometry = retrieve_geometry(None, label, qid, entities, processed_qids, True, False)
+            entity_elapsed = time.perf_counter() - entity_start
+            add_timing("entity_total", entity_elapsed)
+            print(f"[ENTITY TOTAL TIME] '{label}' -> {entity_elapsed:.3f}s")
 
-                if geometry:
-                    for g in geometry:
-                        if g["vkt"]:
-                            feature_id = f"wd:{g['qid']}"
-                            geometry_obj = {
-                                "@id": f"{feature_id}-geom",
-                                "@type": "Geometry",
-                                "asWKT": f"SRID=4326;{g['vkt']}"
-                            }
-                            feature = {
-                                "@id": feature_id,
-                                "@type": "Feature",
-                                "label": g["label"],
-                                "description": g["description"],
-                                "qid": g["qid"],
-                                "wikidata": g["wikidata_url"],
-                                "osm_id": g["osm_id"],
-                                "hasGeometry": geometry_obj
-                            }
-
-                            features.append(feature)
-                            processed_geonames_id.add(geonames_id)
-
-                        else:
-                            logger.warning(f"\n⚠️ Missing geometry for '{g['label']}', Wikidata URL: {g['wikidata_url']}. Skipping '{iri}'.")
-                            continue
-                else:
-                    logger.warning(f"\n⚠️ Missing geometry for '{iri}'. Skipping...")
-                    continue
+        features.append(row)
 
         geosparql_doc = {
             **GEOSPARQL_CONTEXT,
-            "@graph": features
+            "@graph": features_geosparql
         }
+        
+        total_elapsed = time.perf_counter() - start_total
+        add_timing("spacy_ner_total", total_elapsed)
+        print(f"[TOTAL API TIME] {total_elapsed:.3f}s")
 
-        if not download:
-            return JSONResponse(content=geosparql_doc,
-                                media_type="application/ld+json")
-
-        filename = f"geosparql_{uuid4().hex}.jsonld"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(geosparql_doc, f, ensure_ascii=False, indent=2)
-
-        return FileResponse(path, media_type="application/ld+json", filename=filename)
+        print_query_stats()
+        print_timing_stats()
+        
+        return geosparql_doc if not download else download_features(geosparql_doc)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
+        filename, lineno, func, text_last = tb[-1]
+        error_message = f'{str(e)} (File "{filename}", line {lineno}, in {func}: {text_last})'
         raise HTTPException(status_code=500, detail=error_message)
+        
+        
+        
+        
+class SpacyFlairPayload(BaseModel):
+    text: str
+    download: bool = False
 
 
-@app.post("/xml", tags=["Test"])
-async def read_xml_as_gold_standard(
-    file: UploadFile = File(..., description="XML file containing events"),
-    #lang: str = Query("en", description="Analysis language"),
-    download: bool = Query(False, description="If True, return a downloadable .json")
-):
-    """
-        Input: an XML file.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response.
-
-        This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
+@app.post("/spacy-flair", tags=["GeoLinks API Functionality"], summary=" ", operation_id="")
+async def ner_spacy_flair(payload: SpacyFlairPayload):
     try:
+        text = payload.text
+        download = payload.download
+        lang = "en"
 
-        content = await parse_excel_xml(file)
-
-        features = []
-
-        for i, event in enumerate(content):
-
-            print(f"\nEvent content: {event}\n")
-
-            lang = detect(event)
-            doc, nlp = tokenize_text(event, lang=lang)
-            entities_spacy = extract_geo_entity(doc)
-            print(f"\nEntities found by spaCy: {', '.join(entities_spacy)}")
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            print(f"\nIndex: {i + 1}\n")
-
-            for entity in entities_spacy:
-
-                ent = search_wikidata_entity(entity)
-
-                print(f"\nEnt: {ent}\n")
-
-                if ent:
-                    feature = {
-                        "text_label": ent.get("label", ""),
-                        "Wikidata_ID": ent.get("id", "")
-                    }
-                    row["entities"].append(feature)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        filename = f"entities{uuid4().hex}.json"
-        path = f"/tmp/{filename}"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(features, f, ensure_ascii=False, indent=2)
-
-        return FileResponse(path, media_type="application/json", filename=filename)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-@app.post("/flair", tags=["Test"])
-async def ner_using_flair(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Flair and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
+        content = [text]
 
         features = []
         features_geosparql = []
 
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        tagger = SequenceTagger.load("ner") # try flair/ner-english
-        splitter = SegtokSentenceSplitter()
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            entities_flair = []
-
-            sentences = splitter.split(event)
-
-            tagger.predict(sentences)
-
-            for sentence in sentences:
-                for entity in sentence.get_spans('ner'):
-                    if entity.get_label("ner").value == "LOC":
-                        entities_flair.append({
-                            "text": entity.text,
-                            "context": sentence.to_original_text()
-                        })
-
-            all_coords = []
-
-            print("Entities found:")
-            for ent in entities_flair:
-                print(ent['text'])
-
-            for ent in entities_flair:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
-
-            for ent in entities_flair:
-
-                entities = []
-
-                if all_coords:
-                    label = ent['text']
-                    context = ent['context']
-                    candidates = query_candidates(sparql, label)
-                    if candidates:
-                        best = choose_best(model, candidates, context)  #, all_coords
-
-                        if best:
-
-                            append_feature(row, label, best['qid'])
-
-                            if download_geosparql:
-                                do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                    else:
-                        entity = search_wikidata_entity(ent['text'])
-                        if entity:
-
-                            append_feature(row, entity['label'], entity['id'])
-
-                            if download_geosparql:
-                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                else:
-                    entity = search_wikidata_entity(ent['text'])
-                    if entity:
-
-                        append_feature(row, entity['label'], entity['id'])
-
-                        if download_geosparql:
-                            do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/flair-custom-linker", tags=["Test"])
-async def ner_using_flair_alternative(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Flair and searches Wikidata for the corresponding entity (linking) using a SPARQL query, always selecting the first result and double-checking the geographic type, and retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        tagger = SequenceTagger.load("ner")
-
-        splitter = SegtokSentenceSplitter()
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            sentences = splitter.split(event)
-            tagger.predict(sentences)
-
-            entities_flair = []
-
-            for sentence in sentences:
-                for entity in sentence.get_spans('ner'):
-                    if entity.get_label("ner").value == "LOC":
-                        entities_flair.append(entity)
-
-            linked = []
-            for ent in entities_flair:
-                candidates = query_wikidata(ent.text)
-                e = {
-                    "text": ent.text,
-                    "candidates": candidates
-                }
-                linked.append(e)
-                print(f"\nE: {e}")
-
-            for entity in entities_flair:
-
-                ent = search_wikidata_entity(entity.text)
-                entities = []
-
-                if ent:
-
-                    append_feature(row, ent.get("label", ""), ent.get("id", ""))
-
-                    if download_geosparql:
-                        do_geosparql(ent.get("label", ""), ent.get("id", ""), entities, features_geosparql)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/wikifier", tags=["Test"])
-async def wikifier(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities and searches Wikidata for the corresponding entity (linking) using Wikifier. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            result = call_wikifier(event)
-            print(f"\nResult: {result}")
-            for ann in result:
-
-                while True:
-
-                    try:
-
-                        entities = []
-
-                        if any("location" in t.lower() for t in ann.get("types", [])):
-
-                            append_feature(row, ann['title'], ann.get('wikiDataId'))
-
-                            if download_geosparql:
-                                do_geosparql(ann['title'], ann.get('wikiDataId'), entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{ann['title']}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/flair-wikifier", tags=["Test"])
-async def flair_wikifier(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events of the narrative.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities selecting only those that match between Flair and Wikifier analysis, then it searches Wikidata for the corresponding entity (linking) using a SPARQL query. Geographic information, such as latitude and longitude, is retrieved from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        tagger = SequenceTagger.load("ner")
-
-        splitter = SegtokSentenceSplitter()
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            sentences = splitter.split(event)
-            tagger.predict(sentences)
-
-            entities_flair = []
-
-            for sentence in sentences:
-                for entity in sentence.get_spans('ner'):
-                    if entity.get_label("ner").value == "LOC":
-                        entities_flair.append(entity)
-
-            wikifier_result = call_wikifier(event)
-
-            filtered = filter_by_mentions(wikifier_result, entities_flair)
-
-            for entity in filtered:
-
-                while True:
-
-                    try:
-
-                        entities = []
-
-                        append_feature(row, entity['title'], entity['wikiDataId'])
-
-                        if download_geosparql:
-                            do_geosparql(entity['title'], entity['wikiDataId'], entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{entity['title']}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/rel", tags=["Test"])
-async def rel(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Radboud Entity Linker (REL) and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        api_url = "https://rel.cs.ru.nl/api"
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            entities_rel = []
-
-            all_coords = []
-
-            rel_error = False
-
-            try:
-                response = requests.post(
-                    api_url,
-                    json={"text": event, "spans": []},
-                    headers={"Connection": "close"},
-                    timeout=60
-                )
-                response.raise_for_status()
-                el_result = response.json()
-
-            except requests.exceptions.RequestException as e:
-                print(f"[Requests Error] Row {i + 1}: failed request - {e}")
-                el_result = []
-                rel_error = True
-
-            except json.JSONDecodeError as e:
-                print(f"[JSON Error] Row {i + 1}: the answer is not a valid JSON - {e}")
-                el_result = []
-                rel_error = True
-
-            if not rel_error:
-
-                print(f"\nRow: {i+1}, entities found by REL: {el_result}")
-
-                for entity in el_result:
-
-                    if entity[-1] == "LOC":
-                        entities_rel.append({
-                            "text": entity[3],
-                            "context": event
-                        })
-
-            print("Entities found:")
-            for ent in entities_rel:
-                print(ent['text'])
-
-            for ent in entities_rel:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
-
-            for ent in entities_rel:
-
-                while True:
-
-                    try:
-
-                        entities = []
-
-                        if all_coords:
-                            label = ent['text']
-                            context = ent['context']
-                            candidates = query_candidates(sparql, label)
-                            if candidates:
-                                best = choose_best(model, candidates, context)  #, all_coords
-
-                                if best:
-
-                                    append_feature(row, label, best['qid'])
-
-                                    if download_geosparql:
-                                        do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                            else:
-                                entity = search_wikidata_entity(ent['text'])
-                                if entity:
-
-                                    append_feature(row, entity['label'], entity['id'])
-
-                                    if download_geosparql:
-                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        else:
-                            entity = search_wikidata_entity(ent['text'])
-                            if entity:
-
-                                append_feature(row, entity['label'], entity['id'])
-
-                                if download_geosparql:
-                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/rel-flair", tags=["Test"])
-async def rel_flair(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Radboud Entity Linker (REL) and Flair when the former fails, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        api_url = "https://rel.cs.ru.nl/api"
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql = SPARQLWrapper(WIKIDATA_SPARQL_URL)
         sparql.setReturnFormat(JSON)
 
         tagger = SequenceTagger.load("ner")
         splitter = SegtokSentenceSplitter()
 
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+        processed_qids = set()
 
         for i, event in enumerate(content):
+            row = {"row": i + 1, "entities": []}
 
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
+            # spaCy
+            doc, _ = tokenize_text(event, lang=lang)
+            entities_spacy = extract_geo_entity(doc, event)
 
-            entities_rel = []
+            # Flair
+            sentences = splitter.split(event)
+            tagger.predict(sentences)
 
-            all_coords = []
+            existing_texts = {item["text"] for item in entities_spacy}
 
-            rel_error = False
-
-            try:
-                response = requests.post(
-                    api_url,
-                    json={"text": event, "spans": []},
-                    headers={"Connection": "close"},
-                    timeout=60
-                )
-                response.raise_for_status()
-                el_result = response.json()
-
-            except requests.exceptions.RequestException as e:
-                print(f"[Requests Error] Row {i + 1}: failed request - {e}. Trying with Flair...")
-                el_result = []
-                rel_error = True
-
-            except json.JSONDecodeError as e:
-                print(f"[JSON Error] Row {i + 1}: the answer is not a valid JSON - {e}. Trying with Flair...")
-                el_result = []
-                rel_error = True
-
-            if not rel_error:
-
-                print(f"\nRow: {i+1}, entities found by REL: {el_result}")
-
-                for entity in el_result:
-
-                    if entity[-1] == "LOC":
-                        entities_rel.append({
-                            "text": entity[3],
-                            "context": event
-                        })
-
-            else:
-
-                sentences = splitter.split(event)
-
-                tagger.predict(sentences)
-
-                for sentence in sentences:
-                    for entity in sentence.get_spans('ner'):
-                        if entity.get_label("ner").value == "LOC":
-                            entities_rel.append({
+            for sentence in sentences:
+                for entity in sentence.get_spans("ner"):
+                    if entity.get_label("ner").value == "LOC":
+                        if entity.text not in existing_texts:
+                            entities_spacy.append({
                                 "text": entity.text,
                                 "context": sentence.to_original_text()
                             })
+                            existing_texts.add(entity.text)
 
-            print("Entities found:")
-            for ent in entities_rel:
-                print(ent['text'])
+            print("Geo entities with context (spaCy + Flair):")
+            print(entities_spacy)
 
-            for ent in entities_rel:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
+            for ent in entities_spacy:
+                label = ent["text"]
+                context = ent["context"]
 
-            for ent in entities_rel:
+                candidates = query_candidates_full(sparql, label, lang)
 
-                while True:
+                if candidates:
+                    t0 = time.perf_counter()
+                    best = choose_best(sentence_model, candidates, context)
+                    elapsed_best = time.perf_counter() - t0
+                    add_timing("choose_best", elapsed_best)
+                    print(f"[RANKING TIME] '{label}' -> {elapsed_best:.3f}s")
 
-                    try:
+                    if best:
+                        print("\nBest candidate selected:")
+                        print(best)
 
-                        entities = []
+                        if best["qid"] not in processed_qids:
+                            append_feature(row, label, best["qid"])
+                            do_geosparql_from_candidate(best, features_geosparql)
+                            processed_qids.add(best["qid"])
 
-                        if all_coords:
-                            label = ent['text']
-                            context = ent['context']
-                            candidates = query_candidates(sparql, label)
-                            if candidates:
-                                best = choose_best(model, candidates, context)  #, all_coords
+                else:
+                    fallback_entity = search_wikidata_entity(label, lang)
 
-                                if best:
+                    if fallback_entity and fallback_entity["id"] not in processed_qids:
+                        append_feature(row, label, fallback_entity["id"])
 
-                                    append_feature(row, label, best['qid'])
+                        do_geosparql_from_candidate(
+                            {
+                                "qid": fallback_entity["id"],
+                                "label": fallback_entity.get("label", label),
+                                "description": fallback_entity.get("description", ""),
+                                "coord": fallback_entity.get("coord"),
+                                "osm_id": fallback_entity.get("osm_id")
+                            },
+                            features_geosparql
+                        )
 
-                                    if download_geosparql:
-                                        do_geosparql(label, best['qid'], entities, features_geosparql)
+                        processed_qids.add(fallback_entity["id"])
 
-                            else:
-                                entity = search_wikidata_entity(ent['text'])
-                                if entity:
-
-                                    append_feature(row, entity['label'], entity['id'])
-
-                                    if download_geosparql:
-                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        else:
-                            entity = search_wikidata_entity(ent['text'])
-                            if entity:
-
-                                append_feature(row, entity['label'], entity['id'])
-
-                                if download_geosparql:
-                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
-                            time.sleep(5)
-
-                    except requests.RequestException:
-                        print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
-                        time.sleep(5)
-
-            print(f"\nRow: {row}\n")
             features.append(row)
 
+        geosparql_doc = {
+            **GEOSPARQL_CONTEXT,
+            "@graph": features_geosparql
+        }
+
         if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
+            return JSONResponse(content=geosparql_doc, media_type="application/json")
 
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
+        return download_features(geosparql_doc)
 
     except Exception as e:
         tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/spacy", tags=["GeoLinks"])
-async def spacy_ner(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
+        filename, lineno, func, text_last = tb[-1]
+        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text_last})"
+        raise HTTPException(status_code=500, detail=error_message)      
+        
+        
+@app.get("/iri", tags=["GeoLinks API Functionality"], summary=" ")
+async def read_iri_geonames(
+    iri: str = Query(..., description="GeoNames IRI (e.g. https://www.geonames.org/2988507/)"),
+    download: bool = Query(False, description="If true, returns downloadable JSON-LD")
 ):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-
-        This is the best endpoint overall and with the highest precision.
-    """
     try:
+        lang = "en"
 
-        content = await parse_excel_xml(file)
+        match = re.search(r"/(\d+)/?", iri)
+        if not match:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Invalid GeoNames IRI format."}
+            )
 
-        features = []
-        features_geosparql = []
+        geonames_id = match.group(1)
+        print(f"[GEONAMES ID] {geonames_id}")
 
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+        sparql = SPARQLWrapper(WIKIDATA_SPARQL_URL)
         sparql.setReturnFormat(JSON)
 
-        for i, event in enumerate(content):
+        start_query = time.perf_counter()
 
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
+        query = f"""
+        SELECT ?item ?itemLabel ?description ?coord ?osmId WHERE {{
+          ?item wdt:P1566 "{geonames_id}" .
 
-            #lang = detect(event)
-            doc, nlp = tokenize_text(event, lang="en")
-            entities_spacy = extract_geo_entity(doc, event)
+          OPTIONAL {{
+            ?item schema:description ?description .
+            FILTER(LANG(?description) = "{lang}")
+          }}
 
-            all_coords = []
+          OPTIONAL {{ ?item wdt:P625 ?coord }}
+          OPTIONAL {{ ?item wdt:P402 ?osmId }}
 
-            print("Entities found:")
-            for ent in entities_spacy:
-                print(ent['text'])
+          SERVICE wikibase:label {{
+            bd:serviceParam wikibase:language "{lang},en"
+          }}
+        }}
+        LIMIT 1
+        """
 
-            for ent in entities_spacy:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
+        QUERY_COUNTER["wikidata_sparql"] += 1
+        print(f"[SPARQL QUERY #{QUERY_COUNTER['wikidata_sparql']}] geonames_id='{geonames_id}'")
 
-            for ent in entities_spacy:
+        sparql.setQuery(query)
+        results = sparql.query().convert()["results"]["bindings"]
 
-                while True:
+        elapsed = time.perf_counter() - start_query
+        add_timing("wikidata_sparql", elapsed)
+        print(f"[SPARQL TIME] geonames_id='{geonames_id}' -> {elapsed:.3f}s")
 
-                    try:
+        if not results:
+            return JSONResponse(
+                status_code=404,
+                content={"error": f"No Wikidata entity found for GeoNames ID {geonames_id}."}
+            )
 
-                        entities = []
+        r = results[0]
+        qid = r["item"]["value"].split("/")[-1]
+        label = r.get("itemLabel", {}).get("value", "")
+        description = r.get("description", {}).get("value", "")
+        coord_raw = r.get("coord", {}).get("value", "")
+        coord = parse_wikidata_point(coord_raw)
+        osm_id = r.get("osmId", {}).get("value")
 
-                        if all_coords:
-                            label = ent['text']
-                            context = ent['context']
-                            candidates = query_candidates(sparql, label)
-                            if candidates:
-                                best = choose_best(model, candidates, context)  #, all_coords
+        candidate = {
+            "qid": qid,
+            "label": label,
+            "description": description,
+            "coord": coord,
+            "osm_id": osm_id
+        }
 
-                                if best:
-
-                                    append_feature(row, label, best['qid'])
-
-                                    if download_geosparql:
-                                        do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                            else:
-                                entity = search_wikidata_entity(ent['text'])
-                                if entity:
-
-                                    append_feature(row, entity['label'], entity['id'])
-
-                                    if download_geosparql:
-                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        else:
-                            entity = search_wikidata_entity(ent['text'])
-                            if entity:
-
-                                append_feature(row, entity['label'], entity['id'])
-
-                                if download_geosparql:
-                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/spacy-el", tags=["Test"])
-async def spacy_ner_el(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using spaCy 3.8.5 and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format. The algorithm is slightly different from "/spacy" endpoint.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
         features_geosparql = []
+        do_geosparql_from_candidate(candidate, features_geosparql)
 
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        nlp = spacy.load("en_core_web_trf")
-
-        nlp.add_pipe("entityLinker", last=True)
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            doc = nlp(event)
-            #all_linked_entities = doc._.linkedEntities
-            ents = doc.ents
-            entities_spacy = []
-
-            for ent in ents:
-
-                if ent.label_ in ["LOC", "GPE"]:
-
-                    entity = {
-                        "text": ent.text,
-                        "context": event
-                    }
-
-                    entities_spacy.append(entity)
-
-            all_coords = []
-
-            print("Entities found:")
-            for ent in entities_spacy:
-                print(ent['text'])
-
-            for ent in entities_spacy:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
-
-            for ent in entities_spacy:
-
-                while True:
-
-                    try:
-
-                        entities = []
-
-                        if all_coords:
-                            label = ent['text']
-                            context = ent['context']
-                            candidates = query_candidates(sparql, label)
-                            if candidates:
-                                best = choose_best(model, candidates, context)  #, all_coords
-
-                                if best:
-
-                                    append_feature(row, label, best['qid'])
-
-                                    if download_geosparql:
-
-                                        do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                            else:
-                                entity = search_wikidata_entity(ent['text'])
-                                if entity:
-
-                                    append_feature(row, entity['label'], entity['id'])
-
-                                    if download_geosparql:
-
-                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        else:
-                            entity = search_wikidata_entity(ent['text'])
-                            if entity:
-
-                                append_feature(row, entity['label'], entity['id'])
-
-                                if download_geosparql:
-
-                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
+        geosparql_doc = {
+            **GEOSPARQL_CONTEXT,
+            "@graph": features_geosparql
+        }
 
         if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/spacy-flair", tags=["GeoLinks"])
-async def ner_spacy_flair(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities selecting the union of sets of entities found by spaCy 3.8.5 and Flair, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-
-        The quantity of entities found by this algorithm is the highest, but the number of incorrect entities is higher than the "/spacy" endpoint.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        tagger = SequenceTagger.load("ner")
-        splitter = SegtokSentenceSplitter()
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            doc, nlp = tokenize_text(event, lang="en")
-            entities_spacy = extract_geo_entity(doc, event)
-
-            sentences = splitter.split(event)
-
-            tagger.predict(sentences)
-
-            text_entities = [item["text"] for item in entities_spacy]
-
-            for sentence in sentences:
-                for entity in sentence.get_spans('ner'):
-                    if entity.get_label("ner").value == "LOC" and entity.text not in text_entities:
-                        entities_spacy.append({
-                            "text": entity.text,
-                            "context": sentence.to_original_text()
-                        })
-
-            all_coords = []
-
-            print("Entities found:")
-            for ent in entities_spacy:
-                print(ent['text'])
-
-            for ent in entities_spacy:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
-
-            for ent in entities_spacy:
-
-                while True:
-
-                    try:
-
-                        entities = []
-
-                        if all_coords:
-                            label = ent['text']
-                            context = ent['context']
-                            candidates = query_candidates(sparql, label)
-                            if candidates:
-                                best = choose_best(model, candidates, context)  #, all_coords
-
-                                if best:
-
-                                    append_feature(row, label, best['qid'])
-
-                                    if download_geosparql:
-
-                                        do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                            else:
-                                entity = search_wikidata_entity(ent['text'])
-                                if entity and is_geographic_entity(entity['id']):
-
-                                    append_feature(row, entity['label'], entity['id'])
-
-                                    if download_geosparql:
-
-                                        do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        else:
-                            entity = search_wikidata_entity(ent['text'])
-                            if entity and is_geographic_entity(entity['id']):
-
-                                append_feature(row, entity['label'], entity['id'])
-
-                                if download_geosparql:
-
-                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                        break
-
-                    except urllib.error.HTTPError as e:
-
-                        if e.code == 429:
-                            print(f"[WIKIDATA] Too many requests for entity '{ent['text']}'. Retrying...")
-
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/geoparser-wikidata", tags=["Test"])
-async def geoparser_wikidata(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Geoparser, and searches Wikidata for the corresponding entity (linking) using Wikifier or a SPARQL query when the former fails. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        geoparser = Geoparser(
-            spacy_model="en_core_web_trf",
-            transformer_model="dguzh/geo-all-MiniLM-L6-v2", # dguzh/geo-all-distilroberta-v1
-            gazetteer="geonames"
-        )
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            docs = geoparser.parse([event])
-
-            all_coords = []
-
-            for doc in docs:
-                for toponym in doc.toponyms:
-
-                    while True:
-
-                        try:
-                            cands = query_candidates(sparql, toponym.text)
-                            if cands:
-                                all_coords += [c["coord"] for c in cands if c["coord"]]
-
-                            break
-
-                        except urllib.error.HTTPError as e:
-                            if e.code == 429:
-                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
-                                time.sleep(5)
-
-            print("\nEntities found:")
-            for doc in docs:
-                for toponym in doc.toponyms:
-
-                    while True:
-
-                        try:
-
-                            entities = []
-
-                            print(f"- Toponym: {toponym.text}")
-                            location = toponym.location
-
-                            if location:
-                                geonames_id = location['geonameid']
-                                iri = 'https://www.geonames.org/' + geonames_id
-                                wikidata_entity = get_wikidata_entity_from_geonames(iri)
-
-                                if wikidata_entity:
-                                    if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
-
-                                        append_feature(row, wikidata_entity['label'], wikidata_entity['id'])
-
-                                        if download_geosparql:
-
-                                            do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
-
-                                else:
-                                    print(f"Entity {location['name']} could not be resolved. Trying with Wikidata method...")
-
-                                    if all_coords:
-
-                                        label = toponym.text
-                                        context = event
-                                        candidates = query_candidates(sparql, label)
-                                        if candidates:
-                                            best = choose_best(model, candidates, context)  #, all_coords
-
-                                            if best:
-
-                                                append_feature(row, label, best['qid'])
-
-                                                if download_geosparql:
-
-                                                    do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                                        else:
-                                            entity = search_wikidata_entity(label)
-                                            if entity and is_geographic_entity(entity['id']):
-
-                                                append_feature(row, entity['label'], entity['id'])
-
-                                                if download_geosparql:
-
-                                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                                    else:
-                                        entity = search_wikidata_entity(toponym.text)
-                                        if entity and is_geographic_entity(entity['id']):
-
-                                            append_feature(row, entity['label'], entity['id'])
-
-                                            if download_geosparql:
-
-                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                            else:
-                                print(f"Location could not be resolved. Trying with Wikidata method...")
-
-                                if all_coords:
-
-                                    label = toponym.text
-                                    context = event
-                                    candidates = query_candidates(sparql, label)
-                                    if candidates:
-                                        best = choose_best(model, candidates, context)  #, all_coords
-
-                                        if best:
-
-                                            append_feature(row, label, best['qid'])
-
-                                            if download_geosparql:
-
-                                                do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                                    else:
-                                        entity = search_wikidata_entity(label)
-                                        if entity and is_geographic_entity(entity['id']):
-
-                                            append_feature(row, entity['label'], entity['id'])
-
-                                            if download_geosparql:
-
-                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                                else:
-                                    entity = search_wikidata_entity(toponym.text)
-                                    if entity and is_geographic_entity(entity['id']):
-
-                                        append_feature(row, entity['label'], entity['id'])
-
-                                        if download_geosparql:
-
-                                            do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                            break
-
-                        except urllib.error.HTTPError as e:
-                            if e.code == 429:
-                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
-                                time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/geoparser-spacy", tags=["Test"])
-async def geoparser_spacy(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Geoparser or spaCy 3.8.5 when the former fails, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        geoparser = Geoparser(
-            spacy_model="en_core_web_trf",
-            transformer_model="dguzh/geo-all-MiniLM-L6-v2", # dguzh/geo-all-distilroberta-v1
-            gazetteer="geonames"
-        )
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            docs = geoparser.parse([event])
-            doc, nlp = tokenize_text(event, lang="en")
-            entities_spacy = extract_geo_entity(doc, event)
-
-            all_coords = []
-
-            for ent in entities_spacy:
-                cands = query_candidates(sparql, ent['text'])
-                if cands:
-                    all_coords += [c["coord"] for c in cands if c["coord"]]
-
-            print("\nEntities found:")
-            for doc in docs:
-                for toponym in doc.toponyms:
-
-                    while True:
-
-                        try:
-
-                            entities = []
-
-                            print(f"- Toponym: {toponym.text}")
-                            location = toponym.location
-
-                            entities_spacy_text = [item['text'] for item in entities_spacy if item['text']]
-
-                            match = find_similar_string(toponym.text, entities_spacy_text, threshold=0.7)
-
-                            if location:
-                                geonames_id = location['geonameid']
-                                iri = 'https://www.geonames.org/' + geonames_id
-                                wikidata_entity = get_wikidata_entity_from_geonames(iri)
-
-                                if wikidata_entity:
-                                    if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
-
-                                        append_feature(row, wikidata_entity['label'], wikidata_entity['id'])
-
-                                        if download_geosparql:
-
-                                            do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
-
-                                else:
-                                    print(f"Entity {location['name']} could not be resolved. Trying with spacy...")
-
-                                    if all_coords and match:
-
-                                        label = match
-                                        context = event
-                                        candidates = query_candidates(sparql, label)
-                                        if candidates:
-                                            best = choose_best(model, candidates, context)  #, all_coords
-
-                                            if best:
-
-                                                append_feature(row, label, best['qid'])
-
-                                                if download_geosparql:
-
-                                                    do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                                        else:
-                                            entity = search_wikidata_entity(label)
-                                            if entity and is_geographic_entity(entity['id']):
-
-                                                append_feature(row, entity['label'], entity['id'])
-
-                                                if download_geosparql:
-
-                                                    do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                                    else:
-                                        entity = search_wikidata_entity(match)
-                                        if entity and is_geographic_entity(entity['id']):
-
-                                            append_feature(row, entity['label'], entity['id'])
-
-                                            if download_geosparql:
-
-                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                            else:
-                                print(f"Location could not be resolved. Trying with spacy...")
-
-                                if all_coords and match:
-
-                                    label = match
-                                    context = event
-                                    candidates = query_candidates(sparql, label)
-                                    if candidates:
-                                        best = choose_best(model, candidates, context)  #, all_coords
-
-                                        if best:
-
-                                            append_feature(row, label, best['qid'])
-
-                                            if download_geosparql:
-
-                                                do_geosparql(label, best['qid'], entities, features_geosparql)
-
-                                    else:
-                                        entity = search_wikidata_entity(label)
-                                        if entity and is_geographic_entity(entity['id']):
-
-                                            append_feature(row, entity['label'], entity['id'])
-
-                                            if download_geosparql:
-
-                                                do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                                else:
-                                    entity = search_wikidata_entity(match)
-                                    if entity and is_geographic_entity(entity['id']):
-
-                                        append_feature(row, entity['label'], entity['id'])
-
-                                        if download_geosparql:
-
-                                            do_geosparql(entity['label'], entity['id'], entities, features_geosparql)
-
-                            break
-
-                        except urllib.error.HTTPError as e:
-                            if e.code == 429:
-                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
-                                time.sleep(5)
-
-                        except requests.RequestException:
-                            print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
-
-    except Exception as e:
-        tb = traceback.extract_tb(sys.exc_info()[2])
-        filename, lineno, func, text = tb[-1]  # last call in stack
-        error_message = f"{str(e)} (File \"{filename}\", line {lineno}, in {func}: {text})"
-        raise HTTPException(status_code=500, detail=error_message)
-
-
-@app.post("/geoparser", tags=["Test"])
-async def geoparser(
-    file: UploadFile = File(..., description="XML file containing events"),
-    download: bool = Query(False, description="If True, return a downloadable .json"),
-    download_geosparql: bool = Query(False, description="If True, return a downloadable .zip that contains a json file for the evaluation and a jsonld file in geosparql format.")
-):
-    """
-        Input: an XML file containing events.
-
-        Output: a JSON+LD file containing information about the entities found.
-
-        If "download" is True, a link is provided to download the response in JSON format.
-
-        If "download_geosparql" is True, a link is provided to download a .zip containing a JSON file and a JSON+LD file.
-
-        This endpoint extract the text from the XML file, detects geographic entities using Geoparser, and searches Wikidata for the corresponding entity (linking) using a SPARQL query. The entity is chosen from a pool of candidates evaluated based on the similarity of the entity description to the sentence in which the entity is detected from the input text. Then, it retrieves geographic information, such as latitude and longitude, from OpenStreetMap. Lastly, the data is provided in GeoSPARQL format.
-    """
-    try:
-
-        content = await parse_excel_xml(file)
-
-        features = []
-        features_geosparql = []
-
-        geoparser = Geoparser(
-            spacy_model="en_core_web_trf",
-            transformer_model="dguzh/geo-all-MiniLM-L6-v2", # dguzh/geo-all-distilroberta-v1
-            gazetteer="geonames"
-        )
-
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-        sparql.setReturnFormat(JSON)
-
-        for i, event in enumerate(content):
-
-            row = {
-                "row": i + 1,
-                "entities": []
-            }
-
-            docs = geoparser.parse([event])
-
-            print("\nEntities found:")
-            for doc in docs:
-                for toponym in doc.toponyms:
-
-                    while True:
-
-                        try:
-
-                            entities = []
-
-                            print(f"- Toponym: {toponym.text}")
-                            location = toponym.location
-
-                            if location:
-                                geonames_id = location['geonameid']
-                                iri = 'https://www.geonames.org/' + geonames_id
-                                wikidata_entity = get_wikidata_entity_from_geonames(iri)
-
-                                if wikidata_entity:
-                                    if wikidata_entity and is_geographic_entity(wikidata_entity['id']):
-
-                                        append_feature(row, wikidata_entity['label'], wikidata_entity['id'])
-
-                                        if download_geosparql:
-
-                                            do_geosparql(wikidata_entity['label'], wikidata_entity['id'], entities, features_geosparql)
-
-                                else:
-                                    print(f"Entity {location['name']} could not be resolved. Skipping...")
-
-                            else:
-                                print(f"Location could not be resolved. Skipping {toponym.text}...")
-
-                            break
-
-                        except urllib.error.HTTPError as e:
-                            if e.code == 429:
-                                print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
-                                time.sleep(5)
-
-                        except requests.RequestException:
-                            print(f"[WIKIDATA] Too many requests for entity '{toponym.text}'. Retrying...")
-                            time.sleep(5)
-
-            print(f"\nRow: {row}\n")
-            features.append(row)
-
-        if not download:
-            return JSONResponse(content=features,
-                                media_type="application/json")
-
-        if download_geosparql:
-
-            geosparql_doc = {
-                **GEOSPARQL_CONTEXT,
-                "@graph": features_geosparql
-            }
-            return download_zip(features, geosparql_doc)
-
-        else:
-
-            return download_features(features)
+            return JSONResponse(
+                content=geosparql_doc,
+                media_type="application/ld+json"
+            )
+
+        return download_features(geosparql_doc)
 
     except Exception as e:
         full_trace = traceback.format_exc()
